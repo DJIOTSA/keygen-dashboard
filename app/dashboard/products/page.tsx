@@ -48,8 +48,7 @@ export default function ProductsPage() {
     name: "",
     url: "",
     distributionStrategy: "LICENSED",
-    platforms: [""],
-    permissions: ["*"],
+    platforms: [],
   });
 
   const queryClient = useQueryClient();
@@ -60,7 +59,7 @@ export default function ProductsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (productData: Omit<KeygenProduct, "id" | "type">) => await apiClient.createProduct(productData),
+    mutationFn: async (productData: Partial<KeygenProduct>) => await apiClient.createProduct(productData),
     onSuccess: async () => {
       toast("Product created successfully");
       await queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -69,8 +68,7 @@ export default function ProductsPage() {
         name: "",
         url: "",
         distributionStrategy: "LICENSED",
-        platforms: [""],
-        permissions: ["*"],
+        platforms: [],
       });
     },
     onError: (error: any) => {
@@ -81,8 +79,8 @@ export default function ProductsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient.deleteProduct(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
       setIsDeleteDialogOpen(false);
       setSelectedProduct(null);
       toast("Product deleted successfully");
@@ -94,15 +92,14 @@ export default function ProductsPage() {
   });
 
   const handleCreate = () => {
-    const platforms = formData.platforms.filter((p) => p.trim() !== "");
-    createMutation.mutate({
-      ...formData,
-      platforms,
-      permissions: formData.permissions.filter((p) => p.trim() !== ""),
-    });
+    // const platforms = formData.platforms.filter((p) => p.trim() !== "");
+    const productData = {
+      type: "products",
+      attributes: formData,
+    };
+    createMutation.mutate(productData);
   };
 
-  console.log({ formData });
 
   const handleDelete = () => {
     if (selectedProduct) {

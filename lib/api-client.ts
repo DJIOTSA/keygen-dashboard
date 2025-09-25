@@ -123,7 +123,7 @@ class KeygenApiClient {
     return this.makeRequest<KeygenApiResponse<KeygenProduct>>(`/products/${id}`);
   }
 
-  async createProduct(productData: Omit<KeygenProduct, 'id' | 'type'>) {
+  async createProduct(productData: Partial<KeygenProduct>) {
     return this.makeRequest<KeygenApiResponse<KeygenProduct>>('/products', {
       method: 'POST',
       body: JSON.stringify({
@@ -135,7 +135,7 @@ class KeygenApiClient {
     });
   }
 
-  async updateProduct(id: string, productData: Omit<KeygenProduct, 'id' | 'type'>) {
+  async updateProduct(id: string, productData: Partial<KeygenProduct>) {
     return this.makeRequest<KeygenApiResponse<KeygenProduct>>(`/products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({
@@ -174,7 +174,7 @@ class KeygenApiClient {
     });
   }
 
-  async updateLicense(id: string, licenseData: Omit<KeygenLicense, 'id' | 'type'>) {
+  async updateLicense(id: string, licenseData: Partial<KeygenLicense>) {
     return this.makeRequest<KeygenApiResponse<KeygenLicense>>(`/licenses/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({
@@ -213,7 +213,7 @@ class KeygenApiClient {
     return this.makeRequest<KeygenApiResponse<KeygenPolicy>>(`/policies/${id}?include=product`);
   }
 
-  async createPolicy(policyData: Omit<KeygenPolicy, 'id' | 'type'>) {
+  async createPolicy(policyData: Partial<KeygenPolicy>) {
     return this.makeRequest<KeygenApiResponse<KeygenPolicy>>('/policies', {
       method: 'POST',
       body: JSON.stringify({
@@ -226,7 +226,7 @@ class KeygenApiClient {
     });
   }
 
-  async updatePolicy(id: string, policyData: Omit<KeygenPolicy, 'id' | 'type'>) {
+  async updatePolicy(id: string, policyData: Partial<KeygenPolicy>) {
     return this.makeRequest<KeygenApiResponse<KeygenPolicy>>(`/policies/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({
