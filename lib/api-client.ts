@@ -1,3 +1,4 @@
+import { useAuthStore } from './auth-store';
 import { KeygenApiError as KeygenApiErrorType, KeygenApiResponse, KeygenEntitlement, KeygenLicense, KeygenMachine, KeygenPolicy, KeygenProduct, KeygenToken, KeygenUser } from './types';
 
 class KeygenApiError extends Error {
@@ -16,7 +17,8 @@ class KeygenApiClient {
   private token: string | null = null;
 
   constructor() {
-    this.baseUrl = `https://${process.env.NEXT_PUBLIC_KEYGEN_HOST}/v1`;
+    this.baseUrl = `https://${process.env.NEXT_PUBLIC_KEYGEN_HOST}`;
+    this.token = useAuthStore.getState().token;
   }
 
   setToken(token: string) {
@@ -124,12 +126,13 @@ class KeygenApiClient {
   }
 
   async createProduct(productData: Partial<KeygenProduct>) {
+    console.log({productData, in: 'createProduct client api'})
     return this.makeRequest<KeygenApiResponse<KeygenProduct>>('/products', {
       method: 'POST',
       body: JSON.stringify({
         data: {
           type: 'products',
-          attributes: productData,
+          attributes: productData
         },
       }),
     });

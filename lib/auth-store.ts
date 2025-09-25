@@ -11,6 +11,7 @@ interface AuthState {
   } | null;
   login: (token: string, user: any) => void;
   logout: () => void;
+  setToken: (token: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -21,6 +22,12 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       login: (token, user) => set({ token, isAuthenticated: true, user }),
       logout: () => set({ token: null, isAuthenticated: false, user: null }),
+      setToken: (token) =>
+        set((state) => ({
+          token,
+          isAuthenticated: !!token,
+          user: state.user,
+        })),
     }),
     {
       name: 'keygen-auth',

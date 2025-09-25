@@ -8,32 +8,23 @@ import { useState } from "react";
 
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { DataTable } from "@/components/data-table";
+import { EditProductModal } from "@/components/molecules/edit-product-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { KeygenProduct } from "@/lib/types";
 import { toast } from "sonner";
@@ -59,7 +50,8 @@ export default function ProductsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (productData: Partial<KeygenProduct>) => await apiClient.createProduct(productData),
+    mutationFn: async (productData: Partial<KeygenProduct>) =>
+      await apiClient.createProduct(productData),
     onSuccess: async () => {
       toast("Product created successfully");
       await queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -92,14 +84,9 @@ export default function ProductsPage() {
   });
 
   const handleCreate = () => {
-    // const platforms = formData.platforms.filter((p) => p.trim() !== "");
-    const productData = {
-      type: "products",
-      attributes: formData,
-    };
-    createMutation.mutate(productData);
+    console.log({ formData });
+    createMutation.mutate(formData);
   };
-
 
   const handleDelete = () => {
     if (selectedProduct) {
@@ -241,8 +228,17 @@ export default function ProductsPage() {
           searchPlaceholder="Search products..."
         />
 
+        <EditProductModal
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSubmit={handleCreate}
+          isLoading={createMutation.isPending}
+          title="Edit Product"
+          description="Update product information"
+        />
+
         {/* Create Product Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        {/* <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create Product</DialogTitle>
@@ -325,7 +321,7 @@ export default function ProductsPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
 
         {/* Delete Product Dialog */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
