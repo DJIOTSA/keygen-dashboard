@@ -49,26 +49,6 @@ export default function ProductsPage() {
     queryFn: () => apiClient.getProducts(1, 100),
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (productData: Partial<KeygenProduct>) =>
-      await apiClient.createProduct(productData),
-    onSuccess: async () => {
-      toast("Product created successfully");
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      setIsCreateDialogOpen(false);
-      setFormData({
-        name: "",
-        url: "",
-        distributionStrategy: "LICENSED",
-        platforms: [],
-      });
-    },
-    onError: (error: any) => {
-      console.log("Error creating product:", error);
-      toast.error(error.message);
-    },
-  });
-
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient.deleteProduct(id),
     onSuccess: async () => {
@@ -231,97 +211,9 @@ export default function ProductsPage() {
         <EditProductModal
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
-          onSubmit={handleCreate}
-          isLoading={createMutation.isPending}
           title="Edit Product"
           description="Update product information"
         />
-
-        {/* Create Product Dialog */}
-        {/* <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create Product</DialogTitle>
-              <DialogDescription>
-                Add a new product to your Keygen server
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Product Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="My Awesome Software"
-                />
-              </div>
-              <div>
-                <Label htmlFor="url">Product URL</Label>
-                <Input
-                  id="url"
-                  type="url"
-                  value={formData.url}
-                  onChange={(e) =>
-                    setFormData({ ...formData, url: e.target.value })
-                  }
-                  placeholder="https://example.com/product"
-                />
-              </div>
-              <div>
-                <Label htmlFor="distributionStrategy">
-                  Distribution Strategy
-                </Label>
-                <Select
-                  value={formData.distributionStrategy}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, distributionStrategy: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select distribution strategy" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LICENSED">Licensed</SelectItem>
-                    <SelectItem value="OPEN">Open</SelectItem>
-                    <SelectItem value="CLOSED">Closed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="platforms">Platforms (one per line)</Label>
-                <Textarea
-                  id="platforms"
-                  value={formData.platforms.join("\n")}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      platforms: e.target.value.split("\n"),
-                    })
-                  }
-                  placeholder="windows&#10;macos&#10;linux"
-                  rows={4}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? "Creating..." : "Create Product"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog> */}
 
         {/* Delete Product Dialog */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

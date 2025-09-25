@@ -22,7 +22,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { apiClient } from "@/lib/api-client"
 import type { KeygenProduct } from "@/lib/types"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -45,11 +48,10 @@ const productSchema = z.object({
 type ProductFormData = z.infer<typeof productSchema>
 
 interface ProductModalProps {
+  id?: string
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: any) => void
   product?: KeygenProduct | null
-  isLoading?: boolean
   title?: string
   description?: string
 }
@@ -59,17 +61,17 @@ const DISTRIBUTION_STRATEGIES = ["LICENSED", "OPEN", "CLOSED"]
 const COMMON_PLATFORMS = ["windows", "macos", "linux", "ios", "android", "web"]
 
 export function EditProductModal({
+  id,
   open,
   onOpenChange,
-  onSubmit,
   product,
-  isLoading = false,
   title,
   description,
 }: ProductModalProps) {
   const [, copyToClipboard] = useCopyToClipboard()
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [newPlatform, setNewPlatform] = useState("")
+  const queryClient = useQueryClient()
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -82,11 +84,30 @@ export function EditProductModal({
     },
   })
 
+  const editMutation = useMutation({
+    mutationFn: async (productData: Partial<KeygenProduct>) => {
+      if (!id) {
+        return await apiClient.createProduct(productData)
+      }
+      return await apiClient.updateProduct(id, productData)
+    },
+    onSuccess: async () => {
+      toast.success("Product created successfully");
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      onOpenChange(false);
+    },
+    onError: (error: any) => {
+      console.log("Error creating product:", error);
+      toast.error(error.message);
+    },
+  });
+
   const formData = form.watch()
 
   const handleSubmit = () => {
     const { metadata, ...rest } = formData
-    onSubmit({
+    console.log({metadata, rest})
+    editMutation.mutate({
       ...rest,
       ...(metadata && { metadata }),
     })
@@ -113,7 +134,7 @@ export function EditProductModal({
     )
   }
 
-  const isEditing = !!product
+  const isEditing = !!product && !!id
   const modalTitle = title || (isEditing ? "Edit Product" : "Create Product")
   const modalDescription =
     description || (isEditing ? "Update product information" : "Add a new product to your Keygen server")
@@ -262,8 +283,8 @@ export function EditProductModal({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="button" onClick={handleSubmit} disabled={isLoading}>
-                {isLoading
+              <Button type="button" onClick={() => handleSubmit()} disabled={editMutation.isPending}>
+                {editMutation.isPending
                   ? isEditing
                     ? "Updating..."
                     : "Creating..."
