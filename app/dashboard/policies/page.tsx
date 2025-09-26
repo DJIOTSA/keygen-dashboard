@@ -240,33 +240,7 @@ export default function PoliciesPage() {
         const policy = row.original;
         return (
           <div className="flex items-center space-x-2">
-            {/* <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <EditPolicyModal
-                  open={isEditDialogOpen}
-                  onOpenChange={setIsEditDialogOpen}
-                  products={products.data}
-                  policy={policy}
-                />
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setSelectedPolicy(policy);
-                  setIsDeleteDialogOpen(true);
-                }}
-                className="text-red-600"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu> */}
+            {policy.id}
             <EditPolicyModal
               open={isEditDialogOpen}
               onOpenChange={setIsEditDialogOpen}

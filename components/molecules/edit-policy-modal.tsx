@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Check, Copy, Edit } from "lucide-react"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { useCopyToClipboard } from "react-use"
-import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Copy, Edit } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useCopyToClipboard } from "react-use";
+import { z } from "zod";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,15 +16,29 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/hooks/use-toast"
-import { apiClient } from "@/lib/api-client"
-import type { KeygenPolicy, KeygenProduct } from "@/lib/types"
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api-client";
+import type { KeygenPolicy, KeygenProduct } from "@/lib/types";
+import { parseMetadata } from "@/lib/utils";
 
 const policySchema = z.object({
   name: z.string().min(1, "Policy name is required"),
@@ -48,43 +62,48 @@ const policySchema = z.object({
     .string()
     .optional()
     .transform((val) => {
-      if (!val) return undefined
+      if (!val) return undefined;
       try {
-        return JSON.parse(val)
+        return JSON.parse(val);
       } catch {
-        throw new Error("Invalid JSON format")
+        throw new Error("Invalid JSON format");
       }
     }),
-})
+});
 
 type PayloadResponse = {
-  meta: string,
-  error?: Array<{ 
-    title: string,
-    detail: string,
+  meta: string;
+  error?: Array<{
+    title: string;
+    detail: string;
     source: {
-      pointer: string
-    }
-  }>,
-  data?: KeygenPolicy
-}
+      pointer: string;
+    };
+  }>;
+  data?: KeygenPolicy;
+};
 
-type PolicyFormData = z.infer<typeof policySchema>
+type PolicyFormData = z.infer<typeof policySchema>;
 
 interface PolicyModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   // onSubmit?: (data: any) => void
-  policy?: KeygenPolicy | null
-  products: KeygenProduct[]
-  isLoading?: boolean
-  title?: string
-  description?: string
+  policy?: KeygenPolicy | null;
+  products: KeygenProduct[];
+  isLoading?: boolean;
+  title?: string;
+  description?: string;
 }
 
-const SCHEMES = ["ED25519_SIGN", "RSA_2048_PKCS1_SIGN", "RSA_2048_PKCS1_PSS_SIGN", "RSA_2048_JWT_RS256"]
+const SCHEMES = [
+  "ED25519_SIGN",
+  "RSA_2048_PKCS1_SIGN",
+  "RSA_2048_PKCS1_PSS_SIGN",
+  "RSA_2048_JWT_RS256",
+];
 
-const CHECK_IN_INTERVALS = ["day", "week", "month", "year"]
+const CHECK_IN_INTERVALS = ["day", "week", "month", "year"];
 
 export function EditPolicyModal({
   open,
@@ -96,9 +115,16 @@ export function EditPolicyModal({
   title,
   description,
 }: PolicyModalProps) {
-  const [, copyToClipboard] = useCopyToClipboard()
-  const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [, copyToClipboard] = useCopyToClipboard();
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  const isEditing = !!policy && !!policy.id;
+  const modalTitle = title || (isEditing ? "Edit Policy" : "Create Policy");
+  const modalDescription =
+    description ||
+    (isEditing
+      ? "Update policy information"
+      : "Add a new policy to your Keygen server");
 
   const form = useForm<PolicyFormData>({
     resolver: zodResolver(policySchema),
@@ -110,7 +136,8 @@ export function EditPolicyModal({
       requireHeartbeat: policy?.attributes.requireHeartbeat || false,
       requireCheckIn: policy?.attributes.requireCheckIn || false,
       checkInInterval: policy?.attributes.checkInInterval || "",
-      checkInIntervalCount: policy?.attributes.checkInIntervalCount || undefined,
+      checkInIntervalCount:
+        policy?.attributes.checkInIntervalCount || undefined,
       usePool: policy?.attributes.usePool || false,
       maxMachines: policy?.attributes.maxMachines || undefined,
       maxProcesses: policy?.attributes.maxProcesses || undefined,
@@ -120,57 +147,55 @@ export function EditPolicyModal({
       protected: policy?.attributes.protected || false,
       scheme: policy?.attributes.scheme || "",
       productId: policy?.relationships?.product?.data?.id || "",
-      metadata: policy?.attributes.metadata ? JSON.stringify(policy.attributes.metadata, null, 2) : "",
+      metadata: policy?.attributes.metadata
+        ? JSON.stringify(policy.attributes.metadata, null, 2)
+        : "",
     },
-  })
+  });
 
   const editPolicy = async (data: PolicyFormData) => {
-    const response = await apiClient.updatePolicy(policy!.id!, data) as PayloadResponse
-    console.log(response)
-    onOpenChange(false)
-    if(response.data) {
+    const response = isEditing
+      ? ((await apiClient.updatePolicy(policy.id, data)) as PayloadResponse)
+      : ((await apiClient.createPolicy(data)) as PayloadResponse);
+    if (response.data) {
       toast({
         title: "Policy updated",
         description: "The policy has been updated successfully.",
-      })
+      });
     }
-    if(response.error) {
+    if (response.error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: response.error[0].detail,
-      })
+      });
     }
+    onOpenChange(false);
+  };
 
-  }
+  console.log({ formvalue: form.getValues(), policy });
 
   const handleSubmit = (data: PolicyFormData) => {
-    const { metadata, productId, ...rest } = data
-    console.log({rest, metadata, productId})
-    // onSubmit?.({
-    //   attributes: {
-    //     ...rest,
-    //     ...(metadata && { metadata }),
-    //   },
-    //   relationships: {
-    //     product: {
-    //       data: { id: productId, type: "products" },
-    //     },
-    //   },
-    // })
-    editPolicy(data)
-  }
+    const validData = {
+      attributes: {
+        ...data,
+        metadata: parseMetadata(data.metadata),
+      },
+      relationships: {
+        product: {
+          data: { id: data.productId, type: "products" },
+        },
+      },
+    };
+    console.log({validData})
+    editPolicy(validData);
+  };
 
   const handleCopy = (text: string, field: string) => {
-    copyToClipboard(text)
-    setCopiedField(field)
-    setTimeout(() => setCopiedField(null), 2000)
-  }
-
-  const isEditing = !!policy
-  const modalTitle = title || (isEditing ? "Edit Policy" : "Create Policy")
-  const modalDescription =
-    description || (isEditing ? "Update policy information" : "Add a new policy to your Keygen server")
+    copyToClipboard(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,7 +211,10 @@ export function EditPolicyModal({
           <DialogDescription>{modalDescription}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -198,8 +226,17 @@ export function EditPolicyModal({
                       <Input placeholder="My Policy" {...field} />
                     </FormControl>
                     {field.value && (
-                      <Button type="button" variant="outline" size="sm" onClick={() => handleCopy(field.value, "name")}>
-                        {copiedField === "name" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(field.value, "name")}
+                      >
+                        {copiedField === "name" ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     )}
                   </div>
@@ -213,7 +250,10 @@ export function EditPolicyModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Product</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select product" />
@@ -237,7 +277,10 @@ export function EditPolicyModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Scheme</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select scheme" />
@@ -267,7 +310,13 @@ export function EditPolicyModal({
                         type="number"
                         placeholder="86400"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number.parseInt(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? Number.parseInt(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -285,7 +334,13 @@ export function EditPolicyModal({
                         type="number"
                         placeholder="1"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number.parseInt(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? Number.parseInt(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -305,7 +360,13 @@ export function EditPolicyModal({
                         type="number"
                         placeholder="Unlimited"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number.parseInt(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? Number.parseInt(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -323,7 +384,13 @@ export function EditPolicyModal({
                         type="number"
                         placeholder="Unlimited"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number.parseInt(e.target.value) : undefined)}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? Number.parseInt(e.target.value)
+                              : undefined
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -339,10 +406,15 @@ export function EditPolicyModal({
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
                       <FormLabel>Strict</FormLabel>
-                      <div className="text-sm text-muted-foreground">Enforce strict license validation</div>
+                      <div className="text-sm text-muted-foreground">
+                        Enforce strict license validation
+                      </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -354,10 +426,15 @@ export function EditPolicyModal({
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
                       <FormLabel>Floating</FormLabel>
-                      <div className="text-sm text-muted-foreground">Allow floating licenses</div>
+                      <div className="text-sm text-muted-foreground">
+                        Allow floating licenses
+                      </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -369,10 +446,15 @@ export function EditPolicyModal({
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
                       <FormLabel>Encrypted</FormLabel>
-                      <div className="text-sm text-muted-foreground">Encrypt license keys</div>
+                      <div className="text-sm text-muted-foreground">
+                        Encrypt license keys
+                      </div>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -385,14 +467,23 @@ export function EditPolicyModal({
                 <FormItem>
                   <FormLabel>Metadata (JSON)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder='{"key": "value"}' className="font-mono text-sm" rows={4} {...field} />
+                    <Textarea
+                      placeholder='{"key": "value"}'
+                      className="font-mono text-sm"
+                      rows={4}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
@@ -401,13 +492,13 @@ export function EditPolicyModal({
                     ? "Updating..."
                     : "Creating..."
                   : isEditing
-                    ? "Update Policy"
-                    : "Create Policy"}
+                  ? "Update Policy"
+                  : "Create Policy"}
               </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
