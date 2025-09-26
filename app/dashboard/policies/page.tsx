@@ -1,91 +1,95 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { Check, Edit, MoreHorizontal, Plus, Shield, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { Check, Plus, Shield, Trash2 } from "lucide-react";
+import { useState } from "react";
 
-import { DashboardLayout } from '@/components/dashboard-layout';
-import { DataTable } from '@/components/data-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { DashboardLayout } from "@/components/dashboard-layout";
+import { DataTable } from "@/components/data-table";
+import { EditPolicyModal } from "@/components/molecules/edit-policy-modal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/lib/api-client';
-import { KeygenPolicy } from '@/lib/types';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api-client";
+import { KeygenPolicy } from "@/lib/types";
 
 export default function PoliciesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedPolicy, setSelectedPolicy] = useState<KeygenPolicy | null>(null);
+  const [selectedPolicy, setSelectedPolicy] = useState<KeygenPolicy | null>(
+    null
+  );
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    productId: '',
+    name: "",
+    productId: "",
     strict: false,
     floating: false,
     requireHeartbeat: false,
-    maxMachines: '',
-    maxUses: '',
-    duration: '',
-    scheme: 'ED25519_SIGN',
+    maxMachines: "",
+    maxUses: "",
+    duration: "",
+    scheme: "ED25519_SIGN",
   });
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: policies, isLoading } = useQuery({
-    queryKey: ['policies'],
+    queryKey: ["policies"],
     queryFn: () => apiClient.getPolicies(1, 100),
   });
 
   const { data: products } = useQuery({
-    queryKey: ['products'],
+    queryKey: ["products"],
     queryFn: () => apiClient.getProducts(1, 100),
   });
 
   const createMutation = useMutation({
     mutationFn: (policyData: any) => apiClient.createPolicy(policyData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['policies'] });
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
       setIsCreateDialogOpen(false);
       setFormData({
-        name: '',
-        productId: '',
+        name: "",
+        productId: "",
         strict: false,
         floating: false,
         requireHeartbeat: false,
-        maxMachines: '',
-        maxUses: '',
-        duration: '',
-        scheme: 'ED25519_SIGN',
+        maxMachines: "",
+        maxUses: "",
+        duration: "",
+        scheme: "ED25519_SIGN",
       });
       toast({
-        title: 'Policy created',
-        description: 'The policy has been created successfully.',
+        title: "Policy created",
+        description: "The policy has been created successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        variant: 'destructive',
-        title: 'Error',
+        variant: "destructive",
+        title: "Error",
         description: error.message,
       });
     },
@@ -94,18 +98,18 @@ export default function PoliciesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient.deletePolicy(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['policies'] });
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
       setIsDeleteDialogOpen(false);
       setSelectedPolicy(null);
       toast({
-        title: 'Policy deleted',
-        description: 'The policy has been deleted successfully.',
+        title: "Policy deleted",
+        description: "The policy has been deleted successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        variant: 'destructive',
-        title: 'Error',
+        variant: "destructive",
+        title: "Error",
         description: error.message,
       });
     },
@@ -119,15 +123,17 @@ export default function PoliciesPage() {
         floating: formData.floating,
         requireHeartbeat: formData.requireHeartbeat,
         scheme: formData.scheme,
-        ...(formData.maxMachines && { maxMachines: parseInt(formData.maxMachines) }),
+        ...(formData.maxMachines && {
+          maxMachines: parseInt(formData.maxMachines),
+        }),
         ...(formData.maxUses && { maxUses: parseInt(formData.maxUses) }),
         ...(formData.duration && { duration: parseInt(formData.duration) }),
       },
       relationships: {
         ...(formData.productId && {
           product: {
-            data: { type: 'products', id: formData.productId }
-          }
+            data: { type: "products", id: formData.productId },
+          },
         }),
       },
     };
@@ -142,8 +148,8 @@ export default function PoliciesPage() {
 
   const columns: ColumnDef<KeygenPolicy>[] = [
     {
-      accessorKey: 'attributes.name',
-      header: 'Name',
+      accessorKey: "attributes.name",
+      header: "Name",
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Shield className="h-4 w-4 text-muted-foreground" />
@@ -152,17 +158,15 @@ export default function PoliciesPage() {
       ),
     },
     {
-      accessorKey: 'attributes.scheme',
-      header: 'Scheme',
+      accessorKey: "attributes.scheme",
+      header: "Scheme",
       cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.original.attributes.scheme}
-        </Badge>
+        <Badge variant="outline">{row.original.attributes.scheme}</Badge>
       ),
     },
     {
-      accessorKey: 'attributes.maxMachines',
-      header: 'Max Machines',
+      accessorKey: "attributes.maxMachines",
+      header: "Max Machines",
       cell: ({ row }) => {
         const max = row.original.attributes.maxMachines;
         return max ? (
@@ -173,8 +177,8 @@ export default function PoliciesPage() {
       },
     },
     {
-      accessorKey: 'attributes.maxUses',
-      header: 'Max Uses',
+      accessorKey: "attributes.maxUses",
+      header: "Max Uses",
       cell: ({ row }) => {
         const max = row.original.attributes.maxUses;
         return max ? (
@@ -185,8 +189,8 @@ export default function PoliciesPage() {
       },
     },
     {
-      accessorKey: 'attributes.duration',
-      header: 'Duration',
+      accessorKey: "attributes.duration",
+      header: "Duration",
       cell: ({ row }) => {
         const duration = row.original.attributes.duration;
         return duration ? (
@@ -197,7 +201,7 @@ export default function PoliciesPage() {
       },
     },
     {
-      header: 'Flags',
+      header: "Flags",
       cell: ({ row }) => {
         const policy = row.original.attributes;
         return (
@@ -225,16 +229,18 @@ export default function PoliciesPage() {
       },
     },
     {
-      accessorKey: 'attributes.created',
-      header: 'Created',
-      cell: ({ row }) => format(new Date(row.original.attributes.created), 'MMM d, yyyy'),
+      accessorKey: "attributes.created",
+      header: "Created",
+      cell: ({ row }) =>
+        format(new Date(row.original.attributes.created), "MMM d, yyyy"),
     },
     {
-      id: 'actions',
+      id: "actions",
       cell: ({ row }) => {
         const policy = row.original;
         return (
-          <DropdownMenu>
+          <div className="flex items-center space-x-2">
+            {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
                 <MoreHorizontal className="h-4 w-4" />
@@ -242,8 +248,12 @@ export default function PoliciesPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
+                <EditPolicyModal
+                  open={isEditDialogOpen}
+                  onOpenChange={setIsEditDialogOpen}
+                  products={products.data}
+                  policy={policy}
+                />
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -256,7 +266,25 @@ export default function PoliciesPage() {
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
+            <EditPolicyModal
+              open={isEditDialogOpen}
+              onOpenChange={setIsEditDialogOpen}
+              products={products.data}
+              policy={policy}
+            />
+
+            <Button
+              onClick={() => {
+                setSelectedPolicy(policy);
+                setIsDeleteDialogOpen(true);
+              }}
+              className="text-red-600 bg-white hover:bg-red-600 hover:text-white"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </div>
         );
       },
     },
@@ -274,7 +302,6 @@ export default function PoliciesPage() {
       </DashboardLayout>
     );
   }
-
   return (
     <>
       <div className="space-y-6">
@@ -313,16 +340,20 @@ export default function PoliciesPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="Premium Policy"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="productId">Product (Optional)</Label>
                 <Select
                   value={formData.productId}
-                  onValueChange={(value) => setFormData({ ...formData, productId: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, productId: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a product" />
@@ -341,15 +372,21 @@ export default function PoliciesPage() {
                 <Label htmlFor="scheme">Encryption Scheme</Label>
                 <Select
                   value={formData.scheme}
-                  onValueChange={(value) => setFormData({ ...formData, scheme: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, scheme: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select scheme" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ED25519_SIGN">ED25519 Sign</SelectItem>
-                    <SelectItem value="RSA_2048_PKCS1_SIGN">RSA 2048 PKCS1</SelectItem>
-                    <SelectItem value="RSA_2048_PSS_SIGN">RSA 2048 PSS</SelectItem>
+                    <SelectItem value="RSA_2048_PKCS1_SIGN">
+                      RSA 2048 PKCS1
+                    </SelectItem>
+                    <SelectItem value="RSA_2048_PSS_SIGN">
+                      RSA 2048 PSS
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -361,7 +398,9 @@ export default function PoliciesPage() {
                     id="maxMachines"
                     type="number"
                     value={formData.maxMachines}
-                    onChange={(e) => setFormData({ ...formData, maxMachines: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, maxMachines: e.target.value })
+                    }
                     placeholder="Leave empty for unlimited"
                   />
                 </div>
@@ -371,7 +410,9 @@ export default function PoliciesPage() {
                     id="maxUses"
                     type="number"
                     value={formData.maxUses}
-                    onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, maxUses: e.target.value })
+                    }
                     placeholder="Leave empty for unlimited"
                   />
                 </div>
@@ -383,7 +424,9 @@ export default function PoliciesPage() {
                   id="duration"
                   type="number"
                   value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, duration: e.target.value })
+                  }
                   placeholder="Leave empty for permanent"
                 />
               </div>
@@ -398,7 +441,9 @@ export default function PoliciesPage() {
                   </div>
                   <Switch
                     checked={formData.strict}
-                    onCheckedChange={(checked) => setFormData({ ...formData, strict: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, strict: checked })
+                    }
                   />
                 </div>
 
@@ -411,7 +456,9 @@ export default function PoliciesPage() {
                   </div>
                   <Switch
                     checked={formData.floating}
-                    onCheckedChange={(checked) => setFormData({ ...formData, floating: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, floating: checked })
+                    }
                   />
                 </div>
 
@@ -424,17 +471,25 @@ export default function PoliciesPage() {
                   </div>
                   <Switch
                     checked={formData.requireHeartbeat}
-                    onCheckedChange={(checked) => setFormData({ ...formData, requireHeartbeat: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, requireHeartbeat: checked })
+                    }
                   />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'Creating...' : 'Create Policy'}
+              <Button
+                onClick={handleCreate}
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? "Creating..." : "Create Policy"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -446,15 +501,24 @@ export default function PoliciesPage() {
             <DialogHeader>
               <DialogTitle>Delete Policy</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "{selectedPolicy?.attributes.name}"? This action cannot be undone.
+                Are you sure you want to delete "
+                {selectedPolicy?.attributes.name}"? This action cannot be
+                undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
-                {deleteMutation.isPending ? 'Deleting...' : 'Delete Policy'}
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete Policy"}
               </Button>
             </DialogFooter>
           </DialogContent>

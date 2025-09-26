@@ -1,11 +1,11 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Check, Copy, Edit } from "lucide-react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { useCopyToClipboard } from "react-use"
 import { z } from "zod"
-import { Copy, Check } from "lucide-react"
-import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,12 +15,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/hooks/use-toast"
+import { apiClient } from "@/lib/api-client"
 import type { KeygenPolicy, KeygenProduct } from "@/lib/types"
 
 const policySchema = z.object({
@@ -54,12 +57,24 @@ const policySchema = z.object({
     }),
 })
 
+type PayloadResponse = {
+  meta: string,
+  error?: Array<{ 
+    title: string,
+    detail: string,
+    source: {
+      pointer: string
+    }
+  }>,
+  data?: KeygenPolicy
+}
+
 type PolicyFormData = z.infer<typeof policySchema>
 
 interface PolicyModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: any) => void
+  // onSubmit?: (data: any) => void
   policy?: KeygenPolicy | null
   products: KeygenProduct[]
   isLoading?: boolean
@@ -74,7 +89,7 @@ const CHECK_IN_INTERVALS = ["day", "week", "month", "year"]
 export function EditPolicyModal({
   open,
   onOpenChange,
-  onSubmit,
+  // onSubmit,
   policy,
   products,
   isLoading = false,
@@ -83,6 +98,7 @@ export function EditPolicyModal({
 }: PolicyModalProps) {
   const [, copyToClipboard] = useCopyToClipboard()
   const [copiedField, setCopiedField] = useState<string | null>(null)
+
 
   const form = useForm<PolicyFormData>({
     resolver: zodResolver(policySchema),
@@ -108,19 +124,41 @@ export function EditPolicyModal({
     },
   })
 
+  const editPolicy = async (data: PolicyFormData) => {
+    const response = await apiClient.updatePolicy(policy!.id!, data) as PayloadResponse
+    console.log(response)
+    onOpenChange(false)
+    if(response.data) {
+      toast({
+        title: "Policy updated",
+        description: "The policy has been updated successfully.",
+      })
+    }
+    if(response.error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: response.error[0].detail,
+      })
+    }
+
+  }
+
   const handleSubmit = (data: PolicyFormData) => {
     const { metadata, productId, ...rest } = data
-    onSubmit({
-      attributes: {
-        ...rest,
-        ...(metadata && { metadata }),
-      },
-      relationships: {
-        product: {
-          data: { id: productId, type: "products" },
-        },
-      },
-    })
+    console.log({rest, metadata, productId})
+    // onSubmit?.({
+    //   attributes: {
+    //     ...rest,
+    //     ...(metadata && { metadata }),
+    //   },
+    //   relationships: {
+    //     product: {
+    //       data: { id: productId, type: "products" },
+    //     },
+    //   },
+    // })
+    editPolicy(data)
   }
 
   const handleCopy = (text: string, field: string) => {
@@ -136,6 +174,12 @@ export function EditPolicyModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <div className="flex items-center gap-2">
+          <Edit className="h-4 w-4" />
+          <Button variant="none">Edit</Button>
+        </div>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{modalTitle}</DialogTitle>
@@ -176,7 +220,7 @@ export function EditPolicyModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {products.map((product) => (
+                      {products?.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
                           {product.attributes.name}
                         </SelectItem>
