@@ -83,7 +83,6 @@ export function EditProductModal({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [newPlatform, setNewPlatform] = useState("");
   const queryClient = useQueryClient();
-  console.log({product})
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),

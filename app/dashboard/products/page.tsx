@@ -143,23 +143,12 @@ export default function ProductsPage() {
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
-                  setIsEditDialogOpen(true)
+                  setSelectedProduct(product);
+                  setTimeout(() => setIsEditDialogOpen(true), 100);
                 }}
               >
-                <EditProductModal
-                  id={product.id}
-                  trigger={
-                    <>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </>
-                  }
-                  open={isEditDialogOpen}
-                  onOpenChange={setIsEditDialogOpen}
-                  product={product}
-                  title="Edit Product"
-                  description="Update product information"
-                />
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -215,6 +204,16 @@ export default function ProductsPage() {
         />
 
         <EditProductModal
+          id={selectedProduct?.id}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          trigger={<></>}
+          product={selectedProduct}
+          title="Edit Product"
+          description="Update product information"
+        />
+
+        <EditProductModal
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
           title="Add Product"
@@ -227,7 +226,9 @@ export default function ProductsPage() {
             <DialogHeader>
               <DialogTitle>Delete Product</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete {selectedProduct?.attributes.name}? This action cannot be undone.
+                Are you sure you want to delete{" "}
+                {selectedProduct?.attributes.name}? This action cannot be
+                undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
