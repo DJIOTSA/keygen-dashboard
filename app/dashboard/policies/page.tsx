@@ -6,23 +6,22 @@ import { format } from 'date-fns';
 import { Check, Edit, MoreHorizontal, Plus, Shield, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { DataTable } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,11 +30,13 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
 import { KeygenPolicy } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 export default function PoliciesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<KeygenPolicy | null>(null);
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     productId: '',
@@ -241,7 +242,7 @@ export default function PoliciesPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/dashboard/policies/${policy.id}`)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
@@ -285,7 +286,7 @@ export default function PoliciesPage() {
               Define license policies and validation rules
             </p>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button onClick={() => router.push('/dashboard/policies/new')}>
             <Plus className="mr-2 h-4 w-4" />
             Add Policy
           </Button>

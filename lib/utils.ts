@@ -6,11 +6,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function parseMetadata(input: string): Record<string, unknown> | undefined {
+  
   if (!input.trim()) return undefined;
-
+  
   try {
     let normalized = input.trim();
-
+    
     // Case 1: If it's already a valid JSON object string
     if (normalized.startsWith('{') && normalized.endsWith('}')) {
       return JSON.parse(normalized);

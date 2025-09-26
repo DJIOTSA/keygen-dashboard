@@ -101,23 +101,77 @@ export interface KeygenUser {
     attributes: {
       name: string;
       duration?: number;
-      strict: boolean;
-      floating: boolean;
-      requireHeartbeat: boolean;
-      requireCheckIn: boolean;
-      checkInInterval?: string;
+  
+      strict?: boolean;
+      floating?: boolean;
+      scheme?: 'ED25519_SIGN' | 'RSA_2048_PKCS1_SIGN' | 'RSA_2048_PSS_SIGN' | null;
+  
+      // Scope requirements
+      requireProductScope?: boolean;
+      requirePolicyScope?: boolean;
+      requireMachineScope?: boolean;
+      requireFingerprintScope?: boolean;
+      requireComponentsScope?: boolean;
+      requireUserScope?: boolean;
+      requireChecksumScope?: boolean;
+      requireVersionScope?: boolean;
+  
+      // Check-in & heartbeat
+      requireCheckIn?: boolean;
+      checkInInterval?: number;
       checkInIntervalCount?: number;
-      usePool: boolean;
+      requireHeartbeat?: boolean;
+      heartbeatDuration?: number;
+      heartbeatCullStrategy?: 'DEACTIVATE_DEAD' | 'DELETE_DEAD' | 'DO_NOTHING' | null;
+      heartbeatResurrectionStrategy?: 'NO_REVIVE' | 'REVIVE_ON_PING' | null;
+      heartbeatBasis?: 'FROM_CREATION' | 'FROM_FIRST_PING' | null;
+  
+      // Limits
+      usePool?: boolean;
       maxMachines?: number;
       maxProcesses?: number;
+      maxUsers?: number;
       maxCores?: number;
+      maxMemory?: number;
+      maxDisk?: number;
       maxUses?: number;
-      encrypted: boolean;
-      protected: boolean;
-      scheme: string;
+  
+      // Machine strategies
+      machineUniquenessStrategy?: 'UNIQUE_PER_LICENSE' | 'UNIQUE_PER_POLICY' | 'UNIQUE_PER_ACCOUNT' | null;
+      machineMatchingStrategy?: 'MATCH_ALL' | 'MATCH_ANY' | null;
+  
+      // Component strategies
+      componentUniquenessStrategy?: 'UNIQUE_PER_MACHINE' | 'UNIQUE_PER_LICENSE' | 'UNIQUE_PER_POLICY' | null;
+      componentMatchingStrategy?: 'MATCH_ALL' | 'MATCH_ANY' | null;
+  
+      // Expiration & renewal
+      expirationStrategy?: 'RESTRICT_ACCESS' | 'REVOKE_ACCESS' | null;
+      expirationBasis?: 'FROM_CREATION' | 'FROM_ACTIVATION' | 'FROM_FIRST_CHECK_IN' | null;
+      renewalBasis?: 'FROM_EXPIRY' | 'FROM_RENEWAL' | null;
+  
+      // Transfer
+      transferStrategy?: 'KEEP_EXPIRY' | 'RESET_EXPIRY' | null;
+  
+      // Auth
+      authenticationStrategy?: 'TOKEN' | 'LICENSE_KEY' | null;
+  
+      // Leasing
+      machineLeasingStrategy?: 'PER_LICENSE' | 'PER_POLICY' | null;
+      processLeasingStrategy?: 'PER_MACHINE' | 'PER_LICENSE' | 'PER_POLICY' | null;
+  
+      // Overage
+      overageStrategy?: 'NO_OVERAGE' | 'ALLOW_OVERAGE' | null;
+  
+      // Metadata
+      metadata?: Record<string, unknown>;
+  
+      // System properties
+      encrypted?: boolean;
+      protected?: boolean;
+  
+      // Audit timestamps
       created: string;
       updated: string;
-      metadata?: Record<string, unknown>;
     };
     relationships?: {
       product?: { data: { id: string; type: 'products' } };

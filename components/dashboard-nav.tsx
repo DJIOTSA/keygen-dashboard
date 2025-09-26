@@ -1,17 +1,16 @@
 'use client';
 
 import {
-    CreditCard,
-    Gift,
-    Key,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    Monitor,
-    Package,
-    Settings,
-    Shield,
-    Users,
+  Gift,
+  Key,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Monitor,
+  Package,
+  Settings,
+  Shield,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -29,7 +28,7 @@ const navigation = [
   { name: 'Licenses', href: '/dashboard/licenses', icon: Key },
   { name: 'Machines', href: '/dashboard/machines', icon: Monitor },
   { name: 'Policies', href: '/dashboard/policies', icon: Shield },
-  { name: 'Tokens', href: '/dashboard/tokens', icon: CreditCard },
+  // { name: 'Tokens', href: '/dashboard/tokens', icon: CreditCard },
   { name: 'Entitlements', href: '/dashboard/entitlements', icon: Gift },
 ];
 

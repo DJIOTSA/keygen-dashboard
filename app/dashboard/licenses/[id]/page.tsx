@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Copy, Key, Loader, Save, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react"; // Import useEffect
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -41,29 +41,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import {
-  KeygenEntitlement,
   KeygenGroup,
   KeygenLicense,
   KeygenPolicy,
+  KeygenProduct,
   KeygenUser,
 } from "@/lib/types";
+import { parseMetadata } from "@/lib/utils";
 import { toast } from "sonner";
 
 const licenseSchema = z.object({
-  name: z.string(),
-  user: z.string({
-    message: "User is required",
-  }),
-  policy: z.string({
-    message: "Policy is required",
-  }),
-  expiry: z.string({
-    message: "Expiry date is required",
-  }),
+  name: z.string().min(1, "License name is required"),
+  user: z.string().optional(),
+  policy: z.string(),
+  expiry: z.string().min(1, "Expiry date is required"),
   group: z.string().optional(),
-  entitlement: z.string().optional(),
+  product: z.string().optional(),
+  metadata: z.string().optional(),
 });
 
 type LicenseFormData = z.infer<typeof licenseSchema>;
@@ -77,107 +74,119 @@ export default function LicenseDetailPage() {
   const licenseId = params.id as string;
   const isNew = licenseId === "new";
 
-  const { data: license, isLoading } = useQuery({
+  const {
+    data: license,
+    isLoading: isLicenseLoading,
+    isFetched: isLicenseFetched,
+  } = useQuery({
     queryKey: ["license", licenseId],
-    queryFn: () => apiClient.getLicense(licenseId),
+    queryFn: async () => await apiClient.getLicense(licenseId),
     enabled: !isNew,
+    staleTime: 1000,
   });
 
   const { data: policies, isLoading: policiesLoading } = useQuery({
     queryKey: ["policies"],
-    queryFn: () => apiClient.getPolicies(1, 0),
-    enabled: !isNew,
+    queryFn: async () => await apiClient.getPolicies(1, 100),
+    staleTime: 1000,
   });
 
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["users"],
-    queryFn: () => apiClient.getUsers(1, 0),
-    enabled: !isNew,
+    queryFn: async () => await apiClient.getUsers(1, 100),
+    staleTime: 1000,
   });
 
-  const { data: entitlements, isLoading: entitlementsLoading } = useQuery({
-    queryKey: ["entitlements"],
-    queryFn: () => apiClient.getEntitlements(1, 0),
-    enabled: !isNew,
+  const { data: products, isLoading: productsLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => await apiClient.getProducts(1, 100),
+    staleTime: 1000,
   });
 
   const { data: groups, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
-    queryFn: () => apiClient.getGroups(1, 0),
-    enabled: !isNew,
-  });
-
-  const form = useForm<LicenseFormData>({
-    resolver: zodResolver(licenseSchema),
-    defaultValues: license?.data.attributes || {},
+    queryFn: async () => await apiClient.getGroups(1, 100),
+    staleTime: 1000,
   });
 
   const createMutation = useMutation({
     mutationFn: async (licenseData: Partial<KeygenLicense>) =>
-      await apiClient.createLicense(licenseData),
-    onSuccess: async () => {
+      await apiClient.createLicense({
+        attributes: licenseData.attributes,
+        relationships: licenseData.relationships,
+      }),
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["licenses"] });
       toast.success("License created successfully");
-      router.push("/dashboard/licenses");
+      router.push(`/dashboard/licenses/${data.data.id}`);
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to create license");
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async (licenseData: Partial<KeygenLicense>) =>
-      await apiClient.updateLicense(licenseId, licenseData),
+      await apiClient.updateLicense(licenseId, {
+        attributes: licenseData.attributes,
+        relationships: licenseData.relationships,
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["licenses"] });
       await queryClient.invalidateQueries({ queryKey: ["license", licenseId] });
       toast.success("License updated successfully");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to update license");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => apiClient.deleteLicense(licenseId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["licenses"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["licenses"] });
       toast.success("License deleted successfully");
       router.push("/dashboard/licenses");
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to delete license");
     },
   });
 
+  // Function to create relationships object
+  const getRelationships = (data: LicenseFormData) => ({
+    ...(data.user && {
+      owner: {
+        data: { type: "users", id: data.user },
+      },
+    }),
+    ...(data.policy && {
+      policy: {
+        data: { type: "policies", id: data.policy },
+      },
+    }),
+    ...(data.product && {
+      product: {
+        data: { type: "products", id: data.product },
+      },
+    }),
+    ...(data.group && {
+      group: {
+        data: { type: "groups", id: data.group },
+      },
+    }),
+  });
+
   const onSubmit = async (data: LicenseFormData) => {
+    const formattedExpiry = new Date(data.expiry).toISOString();
+
     const licenseData = {
       attributes: {
         name: data.name,
-        expiry: data.expiry,
+        expiry: formattedExpiry,
+        metadata: parseMetadata(data.metadata || ""),
       },
-      relationships: {
-        ...(data.user && {
-          user: {
-            data: { type: "users", id: data.user },
-          },
-        }),
-        ...(data.policy && {
-          policy: {
-            data: { type: "policies", id: data.policy },
-          },
-        }),
-        ...(data.entitlement && {
-          entitlement: {
-            data: { type: "entitlements", id: data.entitlement },
-          },
-        }),
-        ...(data.group && {
-          group: {
-            data: { type: "groups", id: data.group },
-          },
-        }),
-      },
+      relationships: isNew ? getRelationships(data) : undefined,
     };
 
     if (isNew) {
@@ -186,6 +195,57 @@ export default function LicenseDetailPage() {
       await updateMutation.mutateAsync(licenseData as Partial<KeygenLicense>);
     }
   };
+
+  // Memoized default values
+  const defaultValues = useMemo<Partial<LicenseFormData>>(() => {
+    if (isNew || !license?.data) {
+      return {
+        name: "",
+        user: undefined,
+        policy: undefined,
+        expiry: "",
+        group: undefined,
+        product: undefined,
+      };
+    }
+
+    const expiry = license.data.attributes.expiry
+      ? new Date(license.data.attributes.expiry).toISOString().slice(0, 16)
+      : "";
+
+    return license
+      ? {
+          name: license.data.attributes.name ?? "",
+          user: license.data.relationships?.owner?.data?.id,
+          policy: license.data.relationships?.policy?.data?.id,
+          expiry,
+          group: license.data.relationships?.group?.data?.id,
+          product: license.data.relationships?.product?.data?.id,
+          metadata: license.data.attributes.metadata
+            ? JSON.stringify(license.data.attributes.metadata)
+            : undefined,
+        }
+      : undefined;
+  }, [isNew, license]);
+
+  const form = useForm<LicenseFormData>({
+    resolver: zodResolver(licenseSchema),
+    mode: "onBlur",
+    defaultValues,
+  });
+
+  useEffect(() => {
+    if (
+      !isNew &&
+      isLicenseFetched &&
+      license?.data &&
+      !form.formState.isDirty
+    ) {
+      form.reset(defaultValues);
+    } else if (isNew && !form.formState.isDirty) {
+      form.reset(defaultValues);
+    }
+  }, [form, isNew, isLicenseFetched, license?.data, defaultValues]);
 
   const handleDelete = () => {
     deleteMutation.mutate();
@@ -197,22 +257,32 @@ export default function LicenseDetailPage() {
     toast("License key copied to clipboard");
   };
 
-  if (
-    isLoading ||
+  const allLoading =
+    isLicenseLoading ||
     policiesLoading ||
     usersLoading ||
-    entitlementsLoading ||
-    groupsLoading
-  ) {
+    productsLoading ||
+    groupsLoading;
+
+  if (allLoading || !defaultValues) {
     return (
-      <>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <Loader className="animate-spin h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
-            <p>Loading license...</p>
-          </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-4" />
+          <p>Loading license details...</p>
         </div>
-      </>
+      </div>
+    );
+  }
+
+  if (!isNew && !license?.data) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <p className="text-lg text-red-500 mb-4">License not found.</p>
+        <Button onClick={() => router.push("/dashboard/licenses")}>
+          Go to Licenses
+        </Button>
+      </div>
     );
   }
 
@@ -262,15 +332,20 @@ export default function LicenseDetailPage() {
             <CardContent>
               <div className="flex items-center space-x-2">
                 <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
-                  {license.data.attributes.key}
+                  {/* It's safer to only show the key if it exists */}
+                  {license.data.attributes.key
+                    ? "*********************************************************************************"
+                    : "Not available"}
                 </code>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyLicenseKey(license.data.attributes.key)}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+                {license.data.attributes.key && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyLicenseKey(license.data.attributes.key!)} // Assert non-null
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <div className="mt-4 flex items-center space-x-4">
                 <Badge
@@ -336,6 +411,7 @@ export default function LicenseDetailPage() {
                     )}
                   />
 
+                  {/* USER SELECT */}
                   <FormField
                     control={form.control}
                     name="user"
@@ -348,10 +424,11 @@ export default function LicenseDetailPage() {
                               value === "NO_USER" ? undefined : value
                             )
                           }
-                          value={field.value || undefined}
+                          value={field.value || "NO_USER"} // Control the value for Select
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
+                            {/* Re-evaluate if this should be disabled for editing */}
+                            <SelectTrigger disabled={!isNew} className="w-full">
                               <SelectValue placeholder="Select a user" />
                             </SelectTrigger>
                           </FormControl>
@@ -385,6 +462,7 @@ export default function LicenseDetailPage() {
                     )}
                   />
 
+                  {/* POLICY SELECT */}
                   <FormField
                     control={form.control}
                     name="policy"
@@ -397,10 +475,11 @@ export default function LicenseDetailPage() {
                               value === "NO_POLICY" ? undefined : value
                             )
                           }
-                          value={field.value || undefined}
+                          value={field.value || "NO_POLICY"} // Control the value for Select
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
+                            {/* Re-evaluate if this should be disabled for editing */}
+                            <SelectTrigger disabled={!isNew} className="w-full">
                               <SelectValue placeholder="Select a policy" />
                             </SelectTrigger>
                           </FormControl>
@@ -420,6 +499,7 @@ export default function LicenseDetailPage() {
                     )}
                   />
 
+                  {/* GROUP SELECT */}
                   <FormField
                     control={form.control}
                     name="group"
@@ -432,10 +512,11 @@ export default function LicenseDetailPage() {
                               value === "NO_GROUP" ? undefined : value
                             )
                           }
-                          value={field.value || undefined}
+                          value={field.value || "NO_GROUP"} // Control the value for Select
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
+                            {/* Re-evaluate if this should be disabled for editing */}
+                            <SelectTrigger disabled={!isNew} className="w-full">
                               <SelectValue placeholder="Select a group" />
                             </SelectTrigger>
                           </FormControl>
@@ -459,41 +540,55 @@ export default function LicenseDetailPage() {
                     )}
                   />
 
+                  {/* PRODUCT SELECT */}
                   <FormField
                     control={form.control}
-                    name="entitlement"
+                    name="product"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Entitlement (Optional)</FormLabel>
+                        <FormLabel>Product (Optional)</FormLabel>
                         <Select
                           onValueChange={(value) =>
                             field.onChange(
-                              value === "NO_ENTITLEMENT" ? undefined : value
+                              value === "NO_PRODUCT" ? undefined : value
                             )
                           }
-                          value={field.value || undefined}
+                          value={field.value || "NO_PRODUCT"} // Control the value for Select
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select an entitlement" />
+                            {/* Re-evaluate if this should be disabled for editing */}
+                            <SelectTrigger disabled={!isNew} className="w-full">
+                              <SelectValue placeholder="Select a product" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="NO_ENTITLEMENT">
-                              No entitlement assigned
+                            <SelectItem value="NO_PRODUCT">
+                              No product assigned
                             </SelectItem>
-                            {entitlements?.data.map(
-                              (entitlement: KeygenEntitlement) => (
-                                <SelectItem
-                                  key={entitlement.id}
-                                  value={entitlement.id}
-                                >
-                                  {entitlement.attributes.name}
-                                </SelectItem>
-                              )
-                            )}
+                            {products?.data.map((product: KeygenProduct) => (
+                              <SelectItem key={product.id} value={product.id}>
+                                {product.attributes.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="metadata"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Metadata</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder='e.g. { "key":"value" }'
+                            rows={4}
+                            {...field}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

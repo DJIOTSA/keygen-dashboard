@@ -84,7 +84,7 @@ class KeygenApiClient {
 
   // Users
   async getUsers(page = 1, limit = 25) {
-    return this.makeRequest<KeygenApiResponse<KeygenUser[]>>(`/users?role[]=admin&page[number]=${page}&page[size]=${limit}`);
+    return this.makeRequest<KeygenApiResponse<KeygenUser[]>>(`/users?page[number]=${page}&page[size]=${limit}`);
   }
 
   async getUser(id: string) {
@@ -188,7 +188,8 @@ class KeygenApiClient {
         data: {
           type: 'licenses',
           id,
-          attributes: licenseData,
+          attributes: licenseData.attributes,
+          relationships: licenseData.relationships,
         },
       }),
     });
@@ -240,7 +241,12 @@ class KeygenApiClient {
         data: {
           type: 'policies',
           id,
-          attributes: policyData,
+          attributes: {
+            ...policyData.attributes,
+            scheme: undefined,
+            encrypted: undefined,
+            usePool: undefined
+          },
         },
       }),
     });
