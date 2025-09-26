@@ -125,7 +125,7 @@ class KeygenApiClient {
     return this.makeRequest<KeygenApiResponse<KeygenProduct>>(`/products/${id}`);
   }
 
-  async createProduct(productData: Partial<KeygenProduct>) {
+  async createProduct(productData: Partial<KeygenProduct['attributes']>) {
     console.log({productData, in: 'createProduct client api'})
     return this.makeRequest<KeygenApiResponse<KeygenProduct>>('/products', {
       method: 'POST',
@@ -138,7 +138,7 @@ class KeygenApiClient {
     });
   }
 
-  async updateProduct(id: string, productData: Partial<KeygenProduct>) {
+  async updateProduct(id: string, productData: Partial<KeygenProduct['attributes']>) {
     return this.makeRequest<KeygenApiResponse<KeygenProduct>>(`/products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({

@@ -18,6 +18,7 @@ export interface KeygenUser {
     type: 'products';
     attributes: {
       name: string;
+      code?: string;
       url?: string;
       distributionStrategy: string;
       platforms: string[];

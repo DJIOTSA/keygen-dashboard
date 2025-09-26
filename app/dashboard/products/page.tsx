@@ -31,17 +31,11 @@ import { toast } from "sonner";
 
 export default function ProductsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<KeygenProduct | null>(
     null
   );
-  const [formData, setFormData] = useState({
-    name: "",
-    url: "",
-    distributionStrategy: "LICENSED",
-    platforms: [],
-  });
-
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -57,16 +51,11 @@ export default function ProductsPage() {
       setSelectedProduct(null);
       toast("Product deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.log("Error deleting product:", error);
       toast.error(error.message);
     },
   });
-
-  const handleCreate = () => {
-    console.log({ formData });
-    createMutation.mutate(formData);
-  };
 
   const handleDelete = () => {
     if (selectedProduct) {
@@ -151,9 +140,26 @@ export default function ProductsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsEditDialogOpen(true)
+                }}
+              >
+                <EditProductModal
+                  id={product.id}
+                  trigger={
+                    <>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </>
+                  }
+                  open={isEditDialogOpen}
+                  onOpenChange={setIsEditDialogOpen}
+                  product={product}
+                  title="Edit Product"
+                  description="Update product information"
+                />
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -211,8 +217,8 @@ export default function ProductsPage() {
         <EditProductModal
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
-          title="Edit Product"
-          description="Update product information"
+          title="Add Product"
+          description="Add a new product to your Keygen server"
         />
 
         {/* Delete Product Dialog */}
@@ -221,9 +227,7 @@ export default function ProductsPage() {
             <DialogHeader>
               <DialogTitle>Delete Product</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "
-                {selectedProduct?.attributes.name}"? This action cannot be
-                undone.
+                Are you sure you want to delete {selectedProduct?.attributes.name}? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
