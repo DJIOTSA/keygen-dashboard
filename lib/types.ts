@@ -2,14 +2,36 @@ export interface KeygenUser {
     id: string;
     type: 'users';
     attributes: {
+      fullName?: string;
       firstName?: string;
       lastName?: string;
       email: string;
       created: string;
       updated: string;
-      banned?: boolean;
+      status: 'ACTIVE' | 'INACTIVE' | 'BANNED';
+      role: 'user' | 'admin' | 'support-agent' | 'sales-agent' | 'developer' | 'read-only' | 'admin';
       protected?: boolean;
+      password?: string;
       metadata?: Record<string, unknown>;
+      permissions?: string[];
+    };
+  }
+  export interface KeygenGroup {
+    id: string;
+    type: 'groups';
+    attributes: {
+      name: string;
+      code?: string;
+      created: string;
+      updated: string;
+      metadata?: Record<string, unknown>;
+    };
+    relationships?: {
+      users?: { data: Array<{ id: string; type: 'users' }> };
+      licenses?: { data: Array<{ id: string; type: 'licenses' }> };
+      machines?: { data: Array<{ id: string; type: 'machines' }> };
+      policies?: { data: Array<{ id: string; type: 'policies' }> };
+      products?: { data: Array<{ id: string; type: 'products' }> };
     };
   }
   

@@ -1,5 +1,5 @@
 import { useAuthStore } from './auth-store';
-import { KeygenApiError as KeygenApiErrorType, KeygenApiResponse, KeygenEntitlement, KeygenLicense, KeygenMachine, KeygenPolicy, KeygenProduct, KeygenToken, KeygenUser } from './types';
+import { KeygenApiError as KeygenApiErrorType, KeygenApiResponse, KeygenEntitlement, KeygenGroup, KeygenLicense, KeygenMachine, KeygenPolicy, KeygenProduct, KeygenToken, KeygenUser } from './types';
 
 class KeygenApiError extends Error {
   constructor(
@@ -45,6 +45,10 @@ class KeygenApiClient {
       headers,
     });
 
+    if (options.method === 'DELETE' && response.status === 204) {
+      return {} as T;
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -80,14 +84,14 @@ class KeygenApiClient {
 
   // Users
   async getUsers(page = 1, limit = 25) {
-    return this.makeRequest<KeygenApiResponse<KeygenUser[]>>(`/users?page[number]=${page}&page[size]=${limit}`);
+    return this.makeRequest<KeygenApiResponse<KeygenUser[]>>(`/users?role[]=admin&page[number]=${page}&page[size]=${limit}`);
   }
 
   async getUser(id: string) {
     return this.makeRequest<KeygenApiResponse<KeygenUser>>(`/users/${id}`);
   }
 
-  async createUser(userData: Omit<KeygenUser, 'id' | 'type'>) {
+  async createUser(userData: Partial<KeygenUser['attributes']>) {
     return this.makeRequest<KeygenApiResponse<KeygenUser>>('/users', {
       method: 'POST',
       body: JSON.stringify({
@@ -99,7 +103,7 @@ class KeygenApiClient {
     });
   }
 
-  async updateUser(id: string, userData: Omit<KeygenUser, 'id' | 'type'>) {
+  async updateUser(id: string, userData: Partial<KeygenUser['attributes']>) {
     return this.makeRequest<KeygenApiResponse<KeygenUser>>(`/users/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({
@@ -164,7 +168,7 @@ class KeygenApiClient {
     return this.makeRequest<KeygenApiResponse<KeygenLicense>>(`/licenses/${id}?include=user,policy,product,machines`);
   }
 
-  async createLicense(licenseData: Omit<KeygenLicense, 'id' | 'type'>) {
+  async createLicense(licenseData: Partial<KeygenLicense>) {
     return this.makeRequest<KeygenApiResponse<KeygenLicense>>('/licenses', {
       method: 'POST',
       body: JSON.stringify({
@@ -267,6 +271,41 @@ class KeygenApiClient {
     return this.makeRequest(`/tokens/${id}`, { method: 'DELETE' });
   }
 
+  // Groups
+  async getGroups(page = 1, limit = 25) {
+    return this.makeRequest<KeygenApiResponse<KeygenGroup[]>>(`/groups?page[number]=${page}&page[size]=${limit}`);
+  }
+
+  async createGroup(groupData: Omit<KeygenGroup, 'id' | 'type'>) {
+    return this.makeRequest<KeygenApiResponse<KeygenGroup>>('/groups', {
+      method: 'POST',
+      body: JSON.stringify({
+        data: {
+          type: 'groups',
+          attributes: groupData,
+        },
+      }),
+    });
+  }
+
+  async updateGroup(id: string, groupData: Partial<KeygenGroup>) {
+    return this.makeRequest<KeygenApiResponse<KeygenGroup>>(`/groups/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        data: {
+          type: 'groups',
+          id,
+          attributes: groupData,
+        },
+      }),
+    });
+  }
+
+  async deleteGroup(id: string) {
+    return this.makeRequest(`/groups/${id}`, { method: 'DELETE' });
+  }
+  
+  
   // Entitlements
   async getEntitlements(page = 1, limit = 25) {
     return this.makeRequest<KeygenApiResponse<KeygenEntitlement[]>>(`/entitlements?page[number]=${page}&page[size]=${limit}`);
@@ -278,6 +317,19 @@ class KeygenApiClient {
       body: JSON.stringify({
         data: {
           type: 'entitlements',
+          attributes: entitlementData,
+        },
+      }),
+    });
+  }
+
+  async updateEntitlement(id: string, entitlementData: Partial<KeygenEntitlement>) {
+    return this.makeRequest<KeygenApiResponse<KeygenEntitlement>>(`/entitlements/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        data: {
+          type: 'entitlements',
+          id,
           attributes: entitlementData,
         },
       }),
