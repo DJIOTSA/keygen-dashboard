@@ -8,7 +8,6 @@ import { useState } from "react";
 
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { DataTable } from "@/components/data-table";
-import { EditPolicyModal } from "@/components/molecules/edit-policy-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +18,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,6 +37,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import { KeygenPolicy } from "@/lib/types";
+import { Edit, MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 
 export default function PoliciesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -96,23 +103,24 @@ export default function PoliciesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiClient.deletePolicy(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["policies"] });
-      setIsDeleteDialogOpen(false);
-      setSelectedPolicy(null);
-      toast({
-        title: "Policy deleted",
-        description: "The policy has been deleted successfully.",
-      });
+    mutationKey: ["policies"],
+    mutationFn: async (id: string) => {
+      const response = await apiClient.deletePolicy(id)
+
+      if (response.errors) {
+        console.log("yo error")
+        throw new Error(response.errors[0]?.detail || "An error occurred");
+      } else {
+        toast({
+          title: "Policy deleted",
+          description: "The policy has been deleted successfully.",
+        });
+        queryClient.invalidateQueries({ queryKey: ["policies"] });
+        setIsDeleteDialogOpen(false);
+        setSelectedPolicy(null);
+      }
     },
-    onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    },
+   
   });
 
   const handleCreate = () => {
@@ -240,24 +248,33 @@ export default function PoliciesPage() {
         const policy = row.original;
         return (
           <div className="flex items-center space-x-2">
-            {policy.id}
-            <EditPolicyModal
-              open={isEditDialogOpen}
-              onOpenChange={setIsEditDialogOpen}
-              products={products.data}
-              policy={policy}
-            />
-
-            <Button
-              onClick={() => {
-                setSelectedPolicy(policy);
-                setIsDeleteDialogOpen(true);
-              }}
-              className="text-red-600 bg-white hover:bg-red-600 hover:text-white"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Link href={`/dashboard/policies/${policy.id}`}>
+                    <div className="flex items-center gap-2 w-full">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedPolicy(policy);
+                    setIsDeleteDialogOpen(true);
+                  }}
+                  className="text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },
@@ -277,227 +294,226 @@ export default function PoliciesPage() {
     );
   }
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Policies</h1>
-            <p className="text-muted-foreground">
-              Define license policies and validation rules
-            </p>
-          </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+    // <DashboardLayout>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Policies</h1>
+          <p className="text-muted-foreground">
+            Define license policies and validation rules
+          </p>
+        </div>
+
+        <Link href="/dashboard/policies/new">
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add Policy
           </Button>
-        </div>
+        </Link>
+      </div>
 
-        <DataTable
-          columns={columns}
-          data={policies?.data || []}
-          searchKey="attributes.name"
-          searchPlaceholder="Search policies..."
-        />
+      <DataTable
+        columns={columns}
+        data={policies?.data || []}
+        searchKey="attributes.name"
+        searchPlaceholder="Search policies..."
+      />
 
-        {/* Create Policy Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create Policy</DialogTitle>
-              <DialogDescription>
-                Define a new license policy with validation rules
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-              <div>
-                <Label htmlFor="name">Policy Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="Premium Policy"
-                />
-              </div>
+      {/* Create Policy Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Policy</DialogTitle>
+            <DialogDescription>
+              Define a new license policy with validation rules
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <div>
+              <Label htmlFor="name">Policy Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="Premium Policy"
+              />
+            </div>
 
-              <div>
-                <Label htmlFor="productId">Product (Optional)</Label>
-                <Select
-                  value={formData.productId}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, productId: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products?.data.map((product: any) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.attributes.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="scheme">Encryption Scheme</Label>
-                <Select
-                  value={formData.scheme}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, scheme: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select scheme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ED25519_SIGN">ED25519 Sign</SelectItem>
-                    <SelectItem value="RSA_2048_PKCS1_SIGN">
-                      RSA 2048 PKCS1
+            <div>
+              <Label htmlFor="productId">Product (Optional)</Label>
+              <Select
+                value={formData.productId}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, productId: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products?.data.map((product: any) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.attributes.name}
                     </SelectItem>
-                    <SelectItem value="RSA_2048_PSS_SIGN">
-                      RSA 2048 PSS
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="maxMachines">Max Machines</Label>
-                  <Input
-                    id="maxMachines"
-                    type="number"
-                    value={formData.maxMachines}
-                    onChange={(e) =>
-                      setFormData({ ...formData, maxMachines: e.target.value })
-                    }
-                    placeholder="Leave empty for unlimited"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxUses">Max Uses</Label>
-                  <Input
-                    id="maxUses"
-                    type="number"
-                    value={formData.maxUses}
-                    onChange={(e) =>
-                      setFormData({ ...formData, maxUses: e.target.value })
-                    }
-                    placeholder="Leave empty for unlimited"
-                  />
-                </div>
-              </div>
+            <div>
+              <Label htmlFor="scheme">Encryption Scheme</Label>
+              <Select
+                value={formData.scheme}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, scheme: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select scheme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ED25519_SIGN">ED25519 Sign</SelectItem>
+                  <SelectItem value="RSA_2048_PKCS1_SIGN">
+                    RSA 2048 PKCS1
+                  </SelectItem>
+                  <SelectItem value="RSA_2048_PSS_SIGN">
+                    RSA 2048 PSS
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="duration">Duration (seconds)</Label>
+                <Label htmlFor="maxMachines">Max Machines</Label>
                 <Input
-                  id="duration"
+                  id="maxMachines"
                   type="number"
-                  value={formData.duration}
+                  value={formData.maxMachines}
                   onChange={(e) =>
-                    setFormData({ ...formData, duration: e.target.value })
+                    setFormData({ ...formData, maxMachines: e.target.value })
                   }
-                  placeholder="Leave empty for permanent"
+                  placeholder="Leave empty for unlimited"
                 />
               </div>
-
-              <div className="space-y-4 pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Strict Mode</Label>
-                    <div className="text-sm text-muted-foreground">
-                      Enforce strict license validation
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.strict}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, strict: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Floating License</Label>
-                    <div className="text-sm text-muted-foreground">
-                      Allow license to move between machines
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.floating}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, floating: checked })
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Require Heartbeat</Label>
-                    <div className="text-sm text-muted-foreground">
-                      Require periodic heartbeat validation
-                    </div>
-                  </div>
-                  <Switch
-                    checked={formData.requireHeartbeat}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, requireHeartbeat: checked })
-                    }
-                  />
-                </div>
+              <div>
+                <Label htmlFor="maxUses">Max Uses</Label>
+                <Input
+                  id="maxUses"
+                  type="number"
+                  value={formData.maxUses}
+                  onChange={(e) =>
+                    setFormData({ ...formData, maxUses: e.target.value })
+                  }
+                  placeholder="Leave empty for unlimited"
+                />
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? "Creating..." : "Create Policy"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
-        {/* Delete Policy Dialog */}
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Policy</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete "
-                {selectedPolicy?.attributes.name}"? This action cannot be
-                undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? "Deleting..." : "Delete Policy"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </>
+            <div>
+              <Label htmlFor="duration">Duration (seconds)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={formData.duration}
+                onChange={(e) =>
+                  setFormData({ ...formData, duration: e.target.value })
+                }
+                placeholder="Leave empty for permanent"
+              />
+            </div>
+
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Strict Mode</Label>
+                  <div className="text-sm text-muted-foreground">
+                    Enforce strict license validation
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.strict}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, strict: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Floating License</Label>
+                  <div className="text-sm text-muted-foreground">
+                    Allow license to move between machines
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.floating}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, floating: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require Heartbeat</Label>
+                  <div className="text-sm text-muted-foreground">
+                    Require periodic heartbeat validation
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.requireHeartbeat}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, requireHeartbeat: checked })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={createMutation.isPending}>
+              {createMutation.isPending ? "Creating..." : "Create Policy"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Policy Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Policy</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{selectedPolicy?.attributes.name}
+              "? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Policy"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+    // </DashboardLayout>
   );
 }
