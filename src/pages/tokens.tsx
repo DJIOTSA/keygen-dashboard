@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Copy, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Copy, MoveHorizontal as MoreHorizontal, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable } from '@/components/data-table';

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Check, Edit, MoreHorizontal, Plus, Shield, Trash2 } from 'lucide-react';
+import { Check, CreditCard as Edit, MoveHorizontal as MoreHorizontal, Plus, Shield, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
