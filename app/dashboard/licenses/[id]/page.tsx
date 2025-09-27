@@ -82,7 +82,6 @@ export default function LicenseDetailPage() {
     queryKey: ["license", licenseId],
     queryFn: async () => await apiClient.getLicense(licenseId),
     enabled: !isNew,
-    staleTime: 1000,
   });
 
   const { data: policies, isLoading: policiesLoading } = useQuery({
@@ -94,19 +93,16 @@ export default function LicenseDetailPage() {
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => await apiClient.getUsers(1, 100),
-    staleTime: 1000,
   });
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => await apiClient.getProducts(1, 100),
-    staleTime: 1000,
   });
 
   const { data: groups, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => await apiClient.getGroups(1, 100),
-    staleTime: 1000,
   });
 
   const createMutation = useMutation({
@@ -209,23 +205,23 @@ export default function LicenseDetailPage() {
       };
     }
 
+    if (!license) return undefined;
+
     const expiry = license.data.attributes.expiry
       ? new Date(license.data.attributes.expiry).toISOString().slice(0, 16)
       : "";
-
-    return license
-      ? {
-          name: license.data.attributes.name ?? "",
-          user: license.data.relationships?.owner?.data?.id,
-          policy: license.data.relationships?.policy?.data?.id,
-          expiry,
-          group: license.data.relationships?.group?.data?.id,
-          product: license.data.relationships?.product?.data?.id,
-          metadata: license.data.attributes.metadata
-            ? JSON.stringify(license.data.attributes.metadata)
-            : undefined,
-        }
-      : undefined;
+console.log({license})
+    return {
+      name: license.data.attributes.name ?? "",
+      user: license.data.relationships?.owner?.data?.id,
+      policy: license.data.relationships?.policy?.data?.id,
+      expiry,
+      group: license.data.relationships?.group?.data?.id,
+      product: license.data.relationships?.product?.data?.id,
+      metadata: license.data.attributes.metadata
+        ? JSON.stringify(license.data.attributes.metadata)
+        : undefined,
+    };
   }, [isNew, license]);
 
   const form = useForm<LicenseFormData>({
@@ -286,6 +282,7 @@ export default function LicenseDetailPage() {
     );
   }
 
+  console.log({ defaultValues });
   return (
     <>
       <div className="space-y-6">
@@ -424,7 +421,7 @@ export default function LicenseDetailPage() {
                               value === "NO_USER" ? undefined : value
                             )
                           }
-                          value={field.value || "NO_USER"} // Control the value for Select
+                          defaultValue={defaultValues.user || "NO_USER"}
                         >
                           <FormControl>
                             {/* Re-evaluate if this should be disabled for editing */}

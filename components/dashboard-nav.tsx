@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  CreditCard,
   Gift,
   Key,
   LayoutDashboard,
@@ -28,7 +29,7 @@ const navigation = [
   { name: 'Licenses', href: '/dashboard/licenses', icon: Key },
   { name: 'Machines', href: '/dashboard/machines', icon: Monitor },
   { name: 'Policies', href: '/dashboard/policies', icon: Shield },
-  // { name: 'Tokens', href: '/dashboard/tokens', icon: CreditCard },
+  { name: 'Tokens', href: '/dashboard/tokens', icon: CreditCard },
   { name: 'Entitlements', href: '/dashboard/entitlements', icon: Gift },
 ];
 

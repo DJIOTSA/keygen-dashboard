@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Activity, Ellipsis, Monitor, Trash2 } from 'lucide-react';
+import { Activity, Copy, Ellipsis, Monitor, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable } from '@/components/data-table';
@@ -30,6 +30,11 @@ import { toast } from 'sonner';
 export default function MachinesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<KeygenMachine | null>(null);
+
+  const copyLicenseKey = (key: string, message: string = 'Copied to clipboard') => {
+    navigator.clipboard.writeText(key);
+    toast(message);
+  };
 
   const queryClient = useQueryClient();
 
@@ -143,6 +148,36 @@ export default function MachinesPage() {
             <Badge variant={getStatusColor(lastValidated)}>
               {getStatusText(lastValidated)}
             </Badge>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'relationships.license.data.id',
+      header: 'License id',
+      cell: ({ row }) => {
+        const licenseId = row.original.relationships?.license?.data?.id;
+        return (
+          <div className="flex items-center space-x-2">
+            <span>{licenseId?.substring(0, 4)}...{licenseId?.substring(licenseId?.length - 4)}</span>
+            {licenseId && (
+              <Copy className="h-4 w-4" onClick={() => copyLicenseKey(licenseId, 'License id copied to clipboard')} />
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'relationships.user.data.id',
+      header: 'User id',
+      cell: ({ row }) => {
+        const userId = row.original.relationships?.user?.data?.id;
+        return (
+          <div className="flex items-center space-x-2">
+            <span>{userId?.substring(0, 4)}...{userId?.substring(userId?.length - 4)}</span> 
+            {userId && (
+              <Copy className="h-4 w-4" onClick={() => copyLicenseKey(userId, 'User id copied to clipboard')} />
+            )}
           </div>
         );
       },
