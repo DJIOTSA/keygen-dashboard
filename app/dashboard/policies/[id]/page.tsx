@@ -1,10 +1,9 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Trash2, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import PolicyForm from "@/components/molecules/policy-form";
@@ -28,9 +27,57 @@ import {
   Form
 } from "@/components/ui/form";
 import { apiClient } from "@/lib/api-client";
-import { KeygenPolicy, PolicyFormData, policySchema } from "@/lib/types";
+import { KeygenPolicy, PolicyFormData } from "@/lib/types";
 import { parseMetadata } from "@/lib/utils";
 import { toast } from "sonner";
+
+const defaultPolicy: PolicyFormData = {
+  name: "",
+  productId: undefined,
+  duration: undefined,
+  strict: true,
+  floating: true,
+  scheme: "ED25519_SIGN",
+  requireProductScope: false,
+  requirePolicyScope: false,
+  requireMachineScope: false,
+  requireFingerprintScope: false,
+  requireComponentsScope: false,
+  requireUserScope: false,
+  requireChecksumScope: false,
+  requireVersionScope: false,
+  requireCheckIn: false,
+  checkInInterval: undefined,
+  checkInIntervalCount: undefined,
+  usePool: false,
+  maxMachines: undefined,
+  maxProcesses: undefined,
+  maxUsers: undefined,
+  maxCores: undefined,
+  maxMemory: undefined,
+  maxDisk: undefined,
+  maxUses: undefined,
+  encrypted: false,
+  protected: true,
+  requireHeartbeat: false,
+  heartbeatDuration: undefined,
+  heartbeatCullStrategy: "DEACTIVATE_DEAD",
+  heartbeatResurrectionStrategy: "NO_REVIVE",
+  heartbeatBasis: "FROM_FIRST_PING",
+  machineUniquenessStrategy: "UNIQUE_PER_LICENSE",
+  machineMatchingStrategy: "MATCH_ALL",
+  componentUniquenessStrategy: "UNIQUE_PER_MACHINE",
+  componentMatchingStrategy: "MATCH_ALL",
+  expirationStrategy: "RESTRICT_ACCESS",
+  expirationBasis: "FROM_CREATION",
+  renewalBasis: "FROM_EXPIRY",
+  transferStrategy: "KEEP_EXPIRY",
+  authenticationStrategy: "LICENSE",
+  machineLeasingStrategy: "PER_LICENSE",
+  processLeasingStrategy: "PER_MACHINE",
+  overageStrategy: "NO_OVERAGE",
+  metadata: undefined,
+}
 
 
 export default function PolicyDetailPage() {
@@ -97,7 +144,7 @@ export default function PolicyDetailPage() {
         expirationBasis: "FROM_CREATION",
         renewalBasis: "FROM_EXPIRY",
         transferStrategy: "KEEP_EXPIRY",
-        authenticationStrategy: "LICENSE_KEY",
+        authenticationStrategy: "LICENSE",
         machineLeasingStrategy: "PER_LICENSE",
         processLeasingStrategy: "PER_MACHINE",
         overageStrategy: "NO_OVERAGE",
@@ -159,14 +206,67 @@ export default function PolicyDetailPage() {
         ? JSON.stringify(attributes.metadata, null, 2)
         : undefined,
     };
+
     return data;
   }, [policy, isNew]);
 
+  const payload = {
+    name: policy?.data.attributes.name || "",
+    productId: policy?.data.relationships?.product?.data.id,
+    duration: policy?.data.attributes.duration,
+    strict: policy?.data.attributes.strict,
+    floating: policy?.data.attributes.floating,
+    scheme: policy?.data.attributes.scheme as PolicyFormData["scheme"],
+    requireProductScope: policy?.data.attributes.requireProductScope,
+    requirePolicyScope: policy?.data.attributes.requirePolicyScope,
+    requireMachineScope: policy?.data.attributes.requireMachineScope,
+    requireFingerprintScope: policy?.data.attributes.requireFingerprintScope,
+    requireComponentsScope: policy?.data.attributes.requireComponentsScope,
+    requireUserScope: policy?.data.attributes.requireUserScope,
+    requireChecksumScope: policy?.data.attributes.requireChecksumScope,
+    requireVersionScope: policy?.data.attributes.requireVersionScope,
+    requireCheckIn: policy?.data.attributes.requireCheckIn,
+    checkInInterval: policy?.data.attributes.checkInInterval,
+    checkInIntervalCount: policy?.data.attributes.checkInIntervalCount,
+    usePool: policy?.data.attributes.usePool,
+    maxMachines: policy?.data.attributes.maxMachines,
+    maxProcesses: policy?.data.attributes.maxProcesses,
+    maxUsers: policy?.data.attributes.maxUsers,
+    maxCores: policy?.data.attributes.maxCores,
+    maxMemory: policy?.data.attributes.maxMemory,
+    maxDisk: policy?.data.attributes.maxDisk,
+    maxUses: policy?.data.attributes.maxUses,
+    encrypted: policy?.data.attributes.encrypted,
+    protected: policy?.data.attributes.protected,
+    requireHeartbeat: policy?.data.attributes.requireHeartbeat,
+    heartbeatDuration: policy?.data.attributes.heartbeatDuration,
+    heartbeatCullStrategy: policy?.data.attributes.heartbeatCullStrategy,
+    heartbeatResurrectionStrategy: policy?.data.attributes.heartbeatResurrectionStrategy,
+    heartbeatBasis: policy?.data.attributes.heartbeatBasis,
+    machineUniquenessStrategy: policy?.data.attributes.machineUniquenessStrategy,
+    machineMatchingStrategy: policy?.data.attributes.machineMatchingStrategy,
+    componentUniquenessStrategy: policy?.data.attributes.componentUniquenessStrategy,
+    componentMatchingStrategy: policy?.data.attributes.componentMatchingStrategy,
+    expirationStrategy: policy?.data.attributes.expirationStrategy,
+    expirationBasis: policy?.data.attributes.expirationBasis,
+    renewalBasis: policy?.data.attributes.renewalBasis,
+    transferStrategy: policy?.data.attributes.transferStrategy,
+    authenticationStrategy: policy?.data.attributes.authenticationStrategy,
+    machineLeasingStrategy: policy?.data.attributes.machineLeasingStrategy,
+    processLeasingStrategy: policy?.data.attributes.processLeasingStrategy,
+    overageStrategy: policy?.data.attributes.overageStrategy,
+    metadata: policy?.data.attributes.metadata
+      ? JSON.stringify(policy?.data.attributes.metadata, null, 2)
+      : undefined,
+  }
+
   const createMutation = useMutation({
-    mutationFn: async (policyData: Partial<KeygenPolicy>) =>
+    mutationFn: async (policyData: Partial<KeygenPolicy>) => {
+      console.log({policyData});
       await apiClient.createPolicy({
         ...policyData,
-      }),
+      });
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["policies"] });
       toast.success("Policy created successfully");
@@ -208,7 +308,7 @@ export default function PolicyDetailPage() {
     const policyPayload = {
       attributes: {
         name: data.name,
-        duration: data.duration,
+        duration: Number(data.duration),
         strict: data.strict,
         floating: data.floating,
         scheme: data.scheme,
@@ -221,20 +321,20 @@ export default function PolicyDetailPage() {
         requireChecksumScope: data.requireChecksumScope,
         requireVersionScope: data.requireVersionScope,
         requireCheckIn: data.requireCheckIn,
-        checkInInterval: data.checkInInterval,
-        checkInIntervalCount: data.checkInIntervalCount,
+        checkInInterval: Number(data.checkInInterval),
+        checkInIntervalCount: Number(data.checkInIntervalCount),
         usePool: data.usePool,
-        maxMachines: data.maxMachines,
-        maxProcesses: data.maxProcesses,
-        maxUsers: data.maxUsers,
-        maxCores: data.maxCores,
-        maxMemory: data.maxMemory,
-        maxDisk: data.maxDisk,
-        maxUses: data.maxUses,
+        maxMachines: Number(data.maxMachines),
+        maxProcesses: Number(data.maxProcesses),
+        maxUsers: Number(data.maxUsers),
+        maxCores: Number(data.maxCores),
+        maxMemory: Number(data.maxMemory),
+        maxDisk: Number(data.maxDisk),
+        maxUses: Number(data.maxUses),
         encrypted: data.encrypted,
         protected: data.protected,
         requireHeartbeat: data.requireHeartbeat,
-        heartbeatDuration: data.heartbeatDuration,
+        heartbeatDuration: Number(data.heartbeatDuration),
         heartbeatCullStrategy: data.heartbeatCullStrategy,
         heartbeatResurrectionStrategy: data.heartbeatResurrectionStrategy,
         heartbeatBasis: data.heartbeatBasis,
@@ -278,17 +378,12 @@ export default function PolicyDetailPage() {
 
 
   const form = useForm<PolicyFormData>({
-    resolver: zodResolver(policySchema),
-    defaultValues: defaultValues as PolicyFormData
+    // resolver: zodResolver(policySchema),
+    // values: policy? payload : defaultPolicy
+    values: policy? payload : defaultPolicy
   });
 
-  useEffect(()=>{
-    if (!!defaultValues){
-      form.reset(defaultValues as PolicyFormData)
-    }
-  }, [defaultValues,form ])
-
-  if (!defaultValues || isLoading || productsLoading) {
+  if ((isLoading || productsLoading) && (!isNew && !policy)) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -356,7 +451,7 @@ export default function PolicyDetailPage() {
                   className="space-y-8"
                 >
                   {/* form */}
-                  <PolicyForm defaultValues={defaultValues} form={form} products={products.data} isNew={isNew} />
+                  <PolicyForm form={form} products={products.data} isNew={isNew} />
 
                   {/* Actions */}
                   <div className="flex justify-end space-x-4 pt-6 border-t">

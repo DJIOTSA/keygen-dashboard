@@ -165,8 +165,8 @@ export default function ProductDetailPage() {
     if (isNew) {
       await createMutation.mutateAsync({
         ...data,
-        code: data.code?.length ? data.code : null,
-        url: data.url?.length ? data.url : null,
+        code: data.code?.length ? data.code : undefined,
+        url: data.url?.length ? data.url : undefined,
         distributionStrategy: data.distributionStrategy,
         platforms: data.platforms,
       });
@@ -174,8 +174,8 @@ export default function ProductDetailPage() {
       console.log('update mutation')
       await updateMutation.mutateAsync({
         ...data,
-        code: data.code?.length ? data.code : null,
-        url: data.url?.length ? data.url : null,
+        code: data.code?.length ? data.code : undefined,
+        url: data.url?.length ? data.url : undefined,
         distributionStrategy: data.distributionStrategy,
         platforms: data.platforms,
       });

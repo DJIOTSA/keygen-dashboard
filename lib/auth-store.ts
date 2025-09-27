@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { KeygenUser } from './types';
 
 interface AuthState {
   token: string | null;
@@ -10,7 +9,7 @@ interface AuthState {
     firstName?: string;
     lastName?: string;
   } | null;
-  login: (token: string, user: Partial<KeygenUser>) => void;
+  login: (token: string, user: {email: string, firstName?: string, lastName?: string}) => void;
   logout: () => void;
   setToken: (token: string | null) => void;
 }

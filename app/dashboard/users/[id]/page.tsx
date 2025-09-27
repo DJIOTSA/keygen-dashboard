@@ -115,7 +115,7 @@ export default function UserDetailPage() {
       await apiClient.createUser({
         ...userData,
         metadata: parseMetadata(userData.metadata || ""),
-      }),
+      } as any),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["users"] });
       toast.success("User created successfully");
@@ -131,7 +131,7 @@ export default function UserDetailPage() {
       await apiClient.updateUser(userId, {
         ...userData,
         metadata: parseMetadata(userData.metadata || ""),
-      }),
+      } as any),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["users"] });
       await queryClient.invalidateQueries({ queryKey: ["user", userId] });

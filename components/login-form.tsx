@@ -39,7 +39,6 @@ export function LoginForm() {
     setIsLoading(true);
     try {
       const response = await apiClient.authenticate(data.email, data.password);
-      console.log({response});
       const token = response.data.attributes.token;
       
       // Set token in API client
@@ -57,7 +56,11 @@ export function LoginForm() {
 
       router.push('/dashboard');
     } catch (error) {
-      toast.error(error?.message || 'Invalid credentials. Please try again.');
+      if(error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Invalid credentials. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

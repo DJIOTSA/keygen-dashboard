@@ -1,32 +1,31 @@
 "use client";
 
 import {
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { KeygenProduct, PolicyFormData } from "@/lib/types";
 import { UseFormReturn } from "react-hook-form";
 interface Props {
-  defaultValues: PolicyFormData;
   form: UseFormReturn<PolicyFormData>;
   products: KeygenProduct[] | undefined;
   isNew: boolean;
 }
 
-function PolicyForm({ defaultValues, form, products, isNew }: Props) {
+function PolicyForm({ form, products, isNew }: Props) {
   return (
     <>
       {/* Basic Information */}
@@ -44,7 +43,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                   <Input
                     placeholder="Policy name"
                     onChange={field.onChange}
-                    defaultValue={defaultValues.name}
+                    value={field.value}
                   />
                 </FormControl>
                 <FormMessage />
@@ -65,7 +64,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.duration || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -81,7 +80,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Product *</FormLabel>
                 <Select
-                  defaultValue={defaultValues.productId}
+                 value={field.value}
                   onValueChange={field.onChange}
                   disabled={!isNew}
                 >
@@ -116,7 +115,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Encryption Scheme *</FormLabel>
                 <Select
-                  defaultValue={defaultValues.scheme}
+                  value={field.value}
                   onValueChange={field.onChange}
                   disabled={!isNew}
                 >
@@ -173,7 +172,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.strict}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -194,7 +193,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.floating}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -215,7 +214,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.encrypted}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -236,7 +235,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.protected}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -257,7 +256,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.usePool}
+                    checked={field.value }
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -281,7 +280,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.requireProductScope}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -299,7 +298,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.requirePolicyScope}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -317,7 +316,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.requireMachineScope}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -335,9 +334,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={
-                      field.value || defaultValues.requireFingerprintScope
-                    }
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -355,9 +352,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={
-                      field.value || defaultValues.requireComponentsScope
-                    }
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -375,7 +370,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.requireUserScope}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -393,7 +388,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.requireChecksumScope}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -411,7 +406,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value || defaultValues.requireVersionScope}
+                    checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -437,7 +432,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.maxMachines || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -457,7 +452,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.maxProcesses || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -477,7 +472,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.maxUsers || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -497,7 +492,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.maxCores || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -517,7 +512,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.maxMemory || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -537,7 +532,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.maxDisk || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -557,7 +552,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.maxUses || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -604,7 +599,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.checkInInterval || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -624,7 +619,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.checkInIntervalCount || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -671,7 +666,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     type="number"
                     min={0}
                     onChange={field.onChange}
-                    defaultValue={defaultValues.heartbeatDuration || undefined}
+                    value={field.value || undefined}
                   />
                 </FormControl>
                 <FormMessage />
@@ -686,7 +681,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Heartbeat Cull Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.heartbeatCullStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -717,7 +712,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Heartbeat Resurrection Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.heartbeatResurrectionStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -747,7 +742,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Heartbeat Basis</FormLabel>
                 <Select
-                  defaultValue={defaultValues.heartbeatBasis || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -783,7 +778,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Machine Uniqueness Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.machineUniquenessStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -818,7 +813,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Machine Matching Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.machineMatchingStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -846,7 +841,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Component Uniqueness Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.componentUniquenessStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -881,7 +876,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Component Matching Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.componentMatchingStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -909,7 +904,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Expiration Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.expirationStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -939,7 +934,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Expiration Basis</FormLabel>
                 <Select
-                  defaultValue={defaultValues.expirationBasis || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -972,7 +967,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Renewal Basis</FormLabel>
                 <Select
-                  defaultValue={defaultValues.renewalBasis || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -1000,7 +995,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Transfer Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.transferStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -1028,10 +1023,8 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Authentication Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.authenticationStrategy || undefined}
-                  onValueChange={(value) =>
-                    field.onChange(value === "none" ? null : value)
-                  }
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -1039,9 +1032,10 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="NONE">None</SelectItem>
                     <SelectItem value="TOKEN">Token</SelectItem>
-                    <SelectItem value="LICENSE_KEY">License Key</SelectItem>
+                    <SelectItem value="LICENSE">License</SelectItem>
+                    <SelectItem value="MIXED">Mixed</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -1056,7 +1050,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Machine Leasing Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.machineLeasingStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -1084,7 +1078,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Process Leasing Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.processLeasingStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }
@@ -1113,7 +1107,7 @@ function PolicyForm({ defaultValues, form, products, isNew }: Props) {
               <FormItem>
                 <FormLabel>Overage Strategy</FormLabel>
                 <Select
-                  defaultValue={defaultValues.overageStrategy || undefined}
+                  value={field.value || undefined}
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : value)
                   }

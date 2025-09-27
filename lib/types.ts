@@ -156,7 +156,7 @@ export interface KeygenUser {
       transferStrategy?: 'KEEP_EXPIRY' | 'RESET_EXPIRY' | null;
   
       // Auth
-      authenticationStrategy?: 'TOKEN' | 'LICENSE_KEY' | null;
+      authenticationStrategy?: 'TOKEN' | 'LICENSE' | 'MIXED' | 'NONE' | null;
   
       // Leasing
       machineLeasingStrategy?: 'PER_LICENSE' | 'PER_POLICY' | null;
@@ -339,7 +339,7 @@ export interface KeygenUser {
       .optional()
       .nullable(),
     authenticationStrategy: z
-      .enum(["TOKEN", "LICENSE_KEY"])
+      .enum(["TOKEN", "LICENSE", "MIXED", "NONE"])
       .optional()
       .nullable(),
     machineLeasingStrategy: z
