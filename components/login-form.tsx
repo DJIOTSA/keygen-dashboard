@@ -45,7 +45,10 @@ export function LoginForm() {
       
       // Set token in API client
       apiClient.setToken(token);
-      
+
+      // Set token in auth store
+      useAuthStore.setState({ token });
+
       // Store in auth state
       login(token, {
         email: data.email,

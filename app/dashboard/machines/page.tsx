@@ -3,36 +3,39 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { Activity, Monitor, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Activity, Copy, Ellipsis, Monitor, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { DataTable } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
 import { KeygenMachine } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function MachinesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<KeygenMachine | null>(null);
 
-  const { toast } = useToast();
+  const copyLicenseKey = (key: string, message: string = 'Copied to clipboard') => {
+    navigator.clipboard.writeText(key);
+    toast(message);
+  };
+
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -42,27 +45,20 @@ export default function MachinesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient.deleteMachine(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['machines'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['machines'] });
       setIsDeleteDialogOpen(false);
       setSelectedMachine(null);
-      toast({
-        title: 'Machine deleted',
-        description: 'The machine has been deleted successfully.',
-      });
+      toast.success('Machine deleted successfully');
     },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message,
-      });
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedMachine) {
-      deleteMutation.mutate(selectedMachine.id);
+      await deleteMutation.mutateAsync(selectedMachine.id);
     }
   };
 
@@ -149,9 +145,39 @@ export default function MachinesPage() {
         return (
           <div className="flex items-center space-x-2">
             <Activity className="h-3 w-3" />
-            <Badge variant={getStatusColor(lastValidated) as any}>
+            <Badge variant={getStatusColor(lastValidated)}>
               {getStatusText(lastValidated)}
             </Badge>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'relationships.license.data.id',
+      header: 'License id',
+      cell: ({ row }) => {
+        const licenseId = row.original.relationships?.license?.data?.id;
+        return (
+          <div className="flex items-center space-x-2">
+            <span>{licenseId?.substring(0, 4)}...{licenseId?.substring(licenseId?.length - 4)}</span>
+            {licenseId && (
+              <Copy className="h-4 w-4" onClick={() => copyLicenseKey(licenseId, 'License id copied to clipboard')} />
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'relationships.user.data.id',
+      header: 'User id',
+      cell: ({ row }) => {
+        const userId = row.original.relationships?.user?.data?.id;
+        return (
+          <div className="flex items-center space-x-2">
+            <span>{userId?.substring(0, 4)}...{userId?.substring(userId?.length - 4)}</span> 
+            {userId && (
+              <Copy className="h-4 w-4" onClick={() => copyLicenseKey(userId, 'User id copied to clipboard')} />
+            )}
           </div>
         );
       },
@@ -169,7 +195,7 @@ export default function MachinesPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
+                <Ellipsis className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -192,19 +218,19 @@ export default function MachinesPage() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p>Loading machines...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -228,7 +254,7 @@ export default function MachinesPage() {
             <DialogHeader>
               <DialogTitle>Delete Machine</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "{selectedMachine?.attributes.hostname}"? This action cannot be undone.
+                Are you sure you want to delete <strong>{selectedMachine?.attributes.hostname}</strong>? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -242,6 +268,6 @@ export default function MachinesPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

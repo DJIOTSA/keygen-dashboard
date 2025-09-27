@@ -1,6 +1,5 @@
 'use client';
 
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiClient } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
@@ -55,7 +54,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -150,6 +149,6 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

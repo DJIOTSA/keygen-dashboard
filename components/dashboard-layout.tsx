@@ -3,7 +3,7 @@
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardNav } from './dashboard-nav';
 
 interface DashboardLayoutProps {
@@ -13,18 +13,37 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isAuthenticated, token } = useAuthStore();
   const router = useRouter();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    // Wait for hydration to complete
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    
     if (!isAuthenticated || !token) {
-      router.push('/');
+      router.replace('/');
       return;
     }
-
     // Set token in API client
-    apiClient.setToken(token);
-  }, [isAuthenticated, token, router]);
+   apiClient.setToken(token);
+  }, [isAuthenticated, token, router, isInitialized]);
 
-  if (!isAuthenticated) {
+  // Show loading during hydration or if not authenticated
+  if (!isInitialized || !isAuthenticated) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!token) {
     return null;
   }
 
