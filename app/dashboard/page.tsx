@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiClient } from '@/lib/api-client';
+import { KeygenLicense } from '@/lib/types';
 import { useQuery } from '@tanstack/react-query';
 import { Key, Monitor, Package, Users } from 'lucide-react';
 
@@ -41,7 +42,7 @@ export default function Dashboard() {
     },
     {
       title: 'Active Licenses',
-      value: licenses?.data?.filter((l: any) => l.attributes.status === 'active').length || 0,
+      value: licenses?.data?.filter((l: KeygenLicense) => l.attributes.status === 'active').length || 0,
       icon: Key,
       description: 'Currently active',
     },

@@ -6,28 +6,27 @@ import { format } from 'date-fns';
 import { Edit, Gift, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { DataTable } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
 import { KeygenEntitlement } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function EntitlementsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -38,7 +37,6 @@ export default function EntitlementsPage() {
     code: '',
   });
 
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -47,42 +45,28 @@ export default function EntitlementsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (entitlementData: any) => apiClient.createEntitlement(entitlementData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['entitlements'] });
+    mutationFn: (entitlementData: { name: string; code: string }) => apiClient.createEntitlement(entitlementData),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['entitlements'] });
       setIsCreateDialogOpen(false);
       setFormData({ name: '', code: '' });
-      toast({
-        title: 'Entitlement created',
-        description: 'The entitlement has been created successfully.',
-      });
+      toast.success('Entitlement created successfully');
     },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message,
-      });
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient.deleteEntitlement(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['entitlements'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['entitlements'] });
       setIsDeleteDialogOpen(false);
       setSelectedEntitlement(null);
-      toast({
-        title: 'Entitlement deleted',
-        description: 'The entitlement has been deleted successfully.',
-      });
+      toast.success('Entitlement deleted successfully');
     },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message,
-      });
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -236,7 +220,7 @@ export default function EntitlementsPage() {
             <DialogHeader>
               <DialogTitle>Delete Entitlement</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "{selectedEntitlement?.attributes.name}"? This action cannot be undone.
+                Are you sure you want to delete <strong className="font-semibold">{selectedEntitlement?.attributes.name}</strong>? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

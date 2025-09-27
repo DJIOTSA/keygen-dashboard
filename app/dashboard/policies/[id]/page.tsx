@@ -54,9 +54,9 @@ export default function PolicyDetailPage() {
     enabled: !isNew,
   });
 
-  const defaultValues = useMemo(() => {
+  const defaultValues: PolicyFormData | undefined = useMemo(() => {
     if (isNew) {
-      return {
+      const data: PolicyFormData = {
         name: "",
         productId: undefined,
         duration: undefined,
@@ -103,18 +103,20 @@ export default function PolicyDetailPage() {
         overageStrategy: "NO_OVERAGE",
         metadata: undefined,
       };
+      return data;
     }
 
     if (!policy) return undefined;
 
     const attributes = policy?.data.attributes;
-    return {
+
+    const data: PolicyFormData = {
       name: attributes.name,
       productId: policy.data.relationships?.product?.data.id,
       duration: attributes.duration,
       strict: attributes.strict,
       floating: attributes.floating,
-      scheme: attributes.scheme,
+      scheme: attributes.scheme as PolicyFormData["scheme"],
       requireProductScope: attributes.requireProductScope,
       requirePolicyScope: attributes.requirePolicyScope,
       requireMachineScope: attributes.requireMachineScope,
@@ -157,6 +159,7 @@ export default function PolicyDetailPage() {
         ? JSON.stringify(attributes.metadata, null, 2)
         : undefined,
     };
+    return data;
   }, [policy, isNew]);
 
   const createMutation = useMutation({
@@ -276,13 +279,14 @@ export default function PolicyDetailPage() {
 
   const form = useForm<PolicyFormData>({
     resolver: zodResolver(policySchema),
+    defaultValues: defaultValues as PolicyFormData
   });
 
   useEffect(()=>{
     if (!!defaultValues){
-      form.reset(defaultValues)
+      form.reset(defaultValues as PolicyFormData)
     }
-  }, [defaultValues])
+  }, [defaultValues,form ])
 
   if (!defaultValues || isLoading || productsLoading) {
     return (
@@ -352,7 +356,7 @@ export default function PolicyDetailPage() {
                   className="space-y-8"
                 >
                   {/* form */}
-                  <PolicyForm defaultValues={defaultValues as PolicyFormData} form={form} products={products.data} isNew={isNew} />
+                  <PolicyForm defaultValues={defaultValues} form={form} products={products.data} isNew={isNew} />
 
                   {/* Actions */}
                   <div className="flex justify-end space-x-4 pt-6 border-t">

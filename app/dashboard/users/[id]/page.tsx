@@ -121,7 +121,7 @@ export default function UserDetailPage() {
       toast.success("User created successfully");
       router.push("/dashboard/users");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(error.message);
     },
   });

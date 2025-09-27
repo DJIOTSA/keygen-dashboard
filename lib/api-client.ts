@@ -317,7 +317,7 @@ class KeygenApiClient {
     return this.makeRequest<KeygenApiResponse<KeygenEntitlement[]>>(`/entitlements?page[number]=${page}&page[size]=${limit}`);
   }
 
-  async createEntitlement(entitlementData: Omit<KeygenEntitlement, 'id' | 'type'>) {
+  async createEntitlement(entitlementData: Partial<KeygenEntitlement['attributes']>) {
     return this.makeRequest<KeygenApiResponse<KeygenEntitlement>>('/entitlements', {
       method: 'POST',
       body: JSON.stringify({
@@ -329,7 +329,7 @@ class KeygenApiClient {
     });
   }
 
-  async updateEntitlement(id: string, entitlementData: Partial<KeygenEntitlement>) {
+  async updateEntitlement(id: string, entitlementData: Partial<KeygenEntitlement['attributes']>) {
     return this.makeRequest<KeygenApiResponse<KeygenEntitlement>>(`/entitlements/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({

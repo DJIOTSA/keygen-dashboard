@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/lib/auth-store';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -24,7 +24,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const { login } = useAuthStore();
   const router = useRouter();
 
@@ -54,18 +53,11 @@ export function LoginForm() {
         email: data.email,
       });
 
-      toast({
-        title: 'Login successful',
-        description: 'Welcome to the Keygen Dashboard',
-      });
+      toast.success('Login successful');
 
       router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Login failed',
-        description: error.message || 'Invalid credentials. Please try again.',
-      });
+    } catch (error) {
+      toast.error(error?.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }

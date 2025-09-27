@@ -27,10 +27,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
-import { KeygenPolicy } from '@/lib/types';
+import { KeygenPolicy, KeygenProduct } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function PoliciesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -49,7 +49,6 @@ export default function PoliciesPage() {
     scheme: 'ED25519_SIGN',
   });
 
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: policies, isLoading } = useQuery({
@@ -63,7 +62,7 @@ export default function PoliciesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (policyData: any) => apiClient.createPolicy(policyData),
+    mutationFn: (policyData: Partial<KeygenPolicy>) => apiClient.createPolicy(policyData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['policies'] });
       setIsCreateDialogOpen(false);
@@ -78,17 +77,10 @@ export default function PoliciesPage() {
         duration: '',
         scheme: 'ED25519_SIGN',
       });
-      toast({
-        title: 'Policy created',
-        description: 'The policy has been created successfully.',
-      });
+      toast.success('Policy created successfully');
     },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message,
-      });
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -98,17 +90,10 @@ export default function PoliciesPage() {
       queryClient.invalidateQueries({ queryKey: ['policies'] });
       setIsDeleteDialogOpen(false);
       setSelectedPolicy(null);
-      toast({
-        title: 'Policy deleted',
-        description: 'The policy has been deleted successfully.',
-      });
+      toast.success('Policy deleted successfully');
     },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message,
-      });
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -132,7 +117,7 @@ export default function PoliciesPage() {
         }),
       },
     };
-    createMutation.mutate(policyData);
+    createMutation.mutate(policyData as Partial<KeygenPolicy>);
   };
 
   const handleDelete = () => {
@@ -329,7 +314,7 @@ export default function PoliciesPage() {
                     <SelectValue placeholder="Select a product" />
                   </SelectTrigger>
                   <SelectContent>
-                    {products?.data.map((product: any) => (
+                    {products?.data.map((product: KeygenProduct) => (
                       <SelectItem key={product.id} value={product.id}>
                         {product.attributes.name}
                       </SelectItem>
@@ -447,7 +432,7 @@ export default function PoliciesPage() {
             <DialogHeader>
               <DialogTitle>Delete Policy</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "{selectedPolicy?.attributes.name}"? This action cannot be undone.
+                Are you sure you want to delete &quot;{selectedPolicy?.attributes.name}&quot;? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

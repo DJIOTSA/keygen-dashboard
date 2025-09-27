@@ -21,7 +21,7 @@ import { KeygenProduct, PolicyFormData } from "@/lib/types";
 import { UseFormReturn } from "react-hook-form";
 interface Props {
   defaultValues: PolicyFormData;
-  form: UseFormReturn;
+  form: UseFormReturn<PolicyFormData>;
   products: KeygenProduct[] | undefined;
   isNew: boolean;
 }

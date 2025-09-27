@@ -70,6 +70,8 @@ export interface KeygenUser {
     };
     relationships?: {
       user?: { data: { id: string; type: 'users' } };
+      owner?: { data: { id: string; type: 'users' } };
+      group?: { data: { id: string; type: 'groups' } };
       policy?: { data: { id: string; type: 'policies' } };
       product?: { data: { id: string; type: 'products' } };
     };
@@ -106,8 +108,7 @@ export interface KeygenUser {
   
       strict?: boolean;
       floating?: boolean;
-      scheme?: 'ED25519_SIGN' | 'RSA_2048_PKCS1_SIGN' | 'RSA_2048_PSS_SIGN' | null;
-  
+      scheme?: "ED25519_SIGN" | "RSA_2048_PKCS1_SIGN" | "RSA_2048_PSS_SIGN" | "ECDSA_P256_SIGN" | "RSA_2048_PKCS1_PSS_SIGN_V2" | "RSA_2048_PKCS1_SIGN_V2" | "RSA_2048_JWT_RS256" | "RSA_2048_PKCS1_ENCRYPT";
       // Scope requirements
       requireProductScope?: boolean;
       requirePolicyScope?: boolean;

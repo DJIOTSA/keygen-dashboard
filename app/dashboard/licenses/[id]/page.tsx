@@ -193,7 +193,7 @@ export default function LicenseDetailPage() {
   };
 
   // Memoized default values
-  const defaultValues = useMemo<Partial<LicenseFormData>>(() => {
+  const defaultValues = useMemo(() => {
     if (isNew || !license?.data) {
       return {
         name: "",
